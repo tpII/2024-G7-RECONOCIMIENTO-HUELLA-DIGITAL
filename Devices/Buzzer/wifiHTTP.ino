@@ -34,7 +34,7 @@ void setup() {
     http.addHeader("Content-Type", "application/json"); // Cabecera necesaria para el POST
 
     // Cuerpo del POST
-    String postData = "{\"name\":\"Hola muchachitos de informatica\"}";
+    String postData = "{\"name\":\"Hello world!\"}";
 
     // Enviar la solicitud POST
     int httpResponseCode = http.POST(postData);
