@@ -2,7 +2,7 @@
 // usar luego en el código
 // Usar en Arduino IDE eligiendo Lily Go-T Display para cargar en ESP32
 #include "pitches.h"
-#define BUZZZER_PIN  18 // ESP32 pin GPIO18 conectado al buzzer piezo
+#define BUZZZER_PIN  9 // ESP32 pin GPIO18 conectado al buzzer piezo
 
 // Caso Exito
 int successMelody[] = {
@@ -11,12 +11,12 @@ int successMelody[] = {
 
 // Caso Fallo
 int errorMelody[] = {
-  NOTE_C4, NOTE_C4, NOTE_C4, NOTE_C4
+  NOTE_B1, NOTE_B1, NOTE_B1, NOTE_B1
 };
 
 // Duraciones de las notas 
 int noteDurations[] = {
-  4, 4, 4, 4
+  4, 4, 4, 6
 };
 
 void playSuccessSound() {

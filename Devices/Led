@@ -1,1 +1,54 @@
+#define RGB_GREEN 5 
+#define RGB_BLUE 3 
+#define RGB_RED 6
+#define espera 300
+#define duracion 5000  // 5 segundos
 
+void setup() {
+  pinMode(RGB_RED, OUTPUT);
+  pinMode(RGB_GREEN, OUTPUT);
+  pinMode(RGB_BLUE, OUTPUT);
+}
+
+void loop() {
+  // Caso éxito: se pone verde por 5 segundos
+  exito();
+  delay(espera);
+  // Caso fallo: se pone rojo por 5 segundos
+  fallo();
+  delay(espera);
+}
+
+void exito() {
+  int greenIntensity = 0; 
+  int blueIntensity = 255;     
+  int redIntensity = 255;      
+  
+  // Establecer los colores
+  analogWrite(RGB_GREEN, greenIntensity);
+  analogWrite(RGB_BLUE, blueIntensity);
+  analogWrite(RGB_RED, redIntensity);
+  
+  delay(duracion); 
+  apagarRGB(); 
+}
+
+void fallo() {
+  int redIntensity = 0; 
+  int greenIntensity = 255; 
+  int blueIntensity = 255;    
+
+  // Establecer los colores
+  analogWrite(RGB_RED, redIntensity);
+  analogWrite(RGB_GREEN, greenIntensity);
+  analogWrite(RGB_BLUE, blueIntensity);
+  
+  delay(duracion); 
+  apagarRGB(); 
+}
+
+void apagarRGB() {
+  analogWrite(RGB_GREEN, 255);
+  analogWrite(RGB_BLUE, 255);
+  analogWrite(RGB_RED, 255);
+}
