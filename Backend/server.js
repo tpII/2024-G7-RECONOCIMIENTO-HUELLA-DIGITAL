@@ -20,6 +20,7 @@ mongoose.connect(uri, { useNewUrlParser: true });
 
 app.use("/logs", logsRoutes);
 app.use("/api/auth", authRoutes);
+
 app.get("/", (req, res) => {
     res.send("Hello World");
 });

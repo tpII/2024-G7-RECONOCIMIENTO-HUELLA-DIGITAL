@@ -44,6 +44,11 @@ export class AuthController {
         return publicUser;
     }
 
+    static logout(req, res) {
+        res.clearCookie("access_token");
+        res.status(200).json({ message: "Logged out" });
+    }
+
     // Método para recuperar todos los usuarios
     static async getAllUsers(req, res) {
         try {

@@ -30,6 +30,8 @@ router.post("/login", async (req, res) => {
 }
 );
 
+router.post("/logout", AuthController.logout);
+
 router.get('/users', AuthController.getAllUsers);
 router.get('/user-count', AuthController.getUserCount);
 router.get('/check-auth', AuthController.checkAuth);
