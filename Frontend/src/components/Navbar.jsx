@@ -5,7 +5,7 @@ export default function Navbar() {
   return (
     <>
       <nav className="m-6 top-0 left-0 right-0">
-        <div className="mx-auto w-3/4 rounded-full bg-gray-100/70 backdrop-blur-md shadow-md">
+        <div className="mx-auto w-3/4 rounded-full bg-gray-100/90 backdrop-blur-md shadow-md">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
               {/* Sección izquierda: Logo y nombre */}
