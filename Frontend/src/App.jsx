@@ -6,9 +6,9 @@ import {
   Navigate,
 } from "react-router-dom";
 import { useEffect, useState } from "react";
-import Login from "./Login.jsx";
-import Signup from "./Signup.jsx";
-import Home from "./Home.jsx";
+import Login from "./pages/Login.jsx";
+import Signup from "./pages/Signup.jsx";
+import Home from "./pages/Home.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 
 export default function App() {
