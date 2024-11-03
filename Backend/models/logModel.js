@@ -1,10 +1,11 @@
 import mongoose from "mongoose";
 
-const registerSchema = new mongoose.Schema({
+const logSchema = new mongoose.Schema({
     success: { type: Boolean, required: true },
     message: { type: String, required: true },
+    idUserFingerprint: { type: String },
 });
 
-const Register = mongoose.model("Register", registerSchema);
+const Log = mongoose.model("Log", registerSchema);
 
 export default Register;

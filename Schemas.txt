@@ -1,0 +1,25 @@
+Usuarios de pagina web
+
+{
+    "_id" : ObjectId,
+    "username" : "admin",
+    "email": "m@g.com",
+    "password": "123456"
+}
+
+Usuarios de sistema
+    
+{
+    "_id" : ObjectId,
+    "username" : ""
+    idFingerprint: "",
+}
+
+Logs (Accesos al sistema)
+
+{
+    "_id" : ObjectId,
+    "idUserFingerprint" : ObjectId,
+    "timestamp": Date,
+    "success": Boolean,
+}
