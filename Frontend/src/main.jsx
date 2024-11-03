@@ -1,15 +1,15 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import App from './App.jsx'
-import './index.css'
-import { NextUIProvider } from '@nextui-org/react'
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import App from "./App.jsx";
+import "./index.css";
+import { BrowserRouter as Router } from "react-router-dom";
 
-createRoot(document.getElementById('root')).render(
+createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <NextUIProvider>
-      <main className='dark text-foreground bg-background'>
+    <Router>
+      <main className="dark text-foreground bg-background">
         <App />
       </main>
-    </NextUIProvider>
-  </StrictMode>,
-)
+    </Router>
+  </StrictMode>
+);

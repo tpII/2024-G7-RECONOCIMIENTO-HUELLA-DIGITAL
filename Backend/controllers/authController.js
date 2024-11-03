@@ -53,7 +53,7 @@ export class AuthController {
     static async getAllUsers(req, res) {
         try {
             const users = await User.find({}, '-password'); // Excluir el campo password
-            res.json(users);
+            res.status(200).json(users);
         } catch (err) {
             res.status(500).json({ message: 'Error retrieving users' });
         }
@@ -77,7 +77,7 @@ export class AuthController {
         try {
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
             req = decoded;
-            res.status(200).json({ message: "Authenticated" });
+            res.status(200).json({ message: "Authenticated", user: decoded });
         } catch (err) {
             res.status(401).json({ message: "Invalid token" });
         }

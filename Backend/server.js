@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import logsRoutes from './routes/logsRoutes.js';
 import authRoutes from './routes/authRoutes.js';
+import userFingerprintRoutes from './routes/userFingerprintRoutes.js';
 import mongoose from 'mongoose';
 import cookieParser from 'cookie-parser';
 
@@ -20,6 +21,7 @@ mongoose.connect(uri, { useNewUrlParser: true });
 
 app.use("/logs", logsRoutes);
 app.use("/api/auth", authRoutes);
+app.use("/usersFingerprint", userFingerprintRoutes);
 
 app.get("/", (req, res) => {
     res.send("Hello World");

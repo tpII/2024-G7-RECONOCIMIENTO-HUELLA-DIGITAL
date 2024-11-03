@@ -2,10 +2,10 @@ import mongoose from "mongoose";
 
 const logSchema = new mongoose.Schema({
     success: { type: Boolean, required: true },
-    message: { type: String, required: true },
+    timestamp: { type: Date, default: Date.now },
     idUserFingerprint: { type: String },
 });
 
-const Log = mongoose.model("Log", registerSchema);
+const Log = mongoose.model("Log", logSchema);
 
-export default Register;
+export default Log;

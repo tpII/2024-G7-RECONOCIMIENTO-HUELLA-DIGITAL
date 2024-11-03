@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import Fingerprint from "../icons/Fingerprint";
 import {
   Navbar,
@@ -17,7 +18,7 @@ import {
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-export default function NavbarMain() {
+export default function NavbarMain({userData}) {
     const [error, setError] = useState("");
     const navigate = useNavigate();
   
@@ -66,12 +67,12 @@ export default function NavbarMain() {
 
           <NavbarContent className="hidden sm:flex gap-4" justify="center">
             <NavbarItem>
-              <Link href="#" className="text-slate-900">
+              <Link href="/" className="text-slate-900">
                 Inicio
               </Link>
             </NavbarItem>
             <NavbarItem>
-              <Link href="#" className="text-slate-900">
+              <Link href="/usersFingerprint" className="text-slate-900">
                 Usuarios registrados
               </Link>
             </NavbarItem>
@@ -89,7 +90,7 @@ export default function NavbarMain() {
               <DropdownMenu aria-label="Profile Actions" variant="flat">
                 <DropdownItem key="profile" className="h-14 gap-2">
                   <p className="font-semibold">Signed in as</p>
-                  <p className="font-semibold">m@g.com</p>
+                  <p className="font-semibold">{userData.user.email}</p>
                 </DropdownItem>
                 <DropdownItem key="logout" color="danger" onClick={handleSubmit}>
                   Log Out

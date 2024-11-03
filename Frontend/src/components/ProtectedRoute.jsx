@@ -1,8 +1,10 @@
+/* eslint-disable react/prop-types */
 import { Navigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 
 export default function ProtectedRoute({ children }) {
   const [isAuthenticated, setIsAuthenticated] = useState(null);
+  const [userData, setUserData] = useState(null);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -13,6 +15,9 @@ export default function ProtectedRoute({ children }) {
         });
 
         if (response.ok) {
+          const data = await response.json();
+          console.log(data);
+          setUserData(data);
           setIsAuthenticated(true);
         } else {
           setIsAuthenticated(false);
@@ -33,5 +38,9 @@ export default function ProtectedRoute({ children }) {
     return <Navigate to="/login" />;
   }
 
-  return children;
+  return (
+    <>
+      {React.cloneElement(children, { userData })}
+    </>
+  );
 }
