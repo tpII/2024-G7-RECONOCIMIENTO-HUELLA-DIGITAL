@@ -10,13 +10,12 @@ export default function ProtectedRoute({ children }) {
     const checkAuth = async () => {
       try {
         const response = await fetch("http://localhost:5050/api/auth/check-auth", {
-          method: "GET",
+          method: "POST",
           credentials: "include", // Importante para enviar cookies
         });
 
         if (response.ok) {
           const data = await response.json();
-          console.log(data);
           setUserData(data);
           setIsAuthenticated(true);
         } else {
