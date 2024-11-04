@@ -33,8 +33,19 @@ export default function Signup() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Something went wrong");
+        // Lee el cuerpo una vez como texto
+        const errorText = await response.text();
+        
+        // Intenta parsearlo como JSON
+        let errorMessage;
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.message || "Something went wrong";
+        } catch {
+          // Si no es JSON, usa el texto plano
+          errorMessage = errorText;
+        }
+        throw new Error(errorMessage);
       }
 
       setSuccess("Signup successful! Redirecting...");
@@ -52,6 +63,7 @@ export default function Signup() {
         </CardHeader>
         <CardBody className="space-y-4">
           {error && <div className="text-red-500">{error}</div>}
+          {console.log(error)}
           {success && <div className="text-green-500">{success}</div>}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">

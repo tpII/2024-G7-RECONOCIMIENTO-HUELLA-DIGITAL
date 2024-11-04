@@ -13,14 +13,14 @@ trap cleanup SIGINT SIGTERM
 
 # Navegar a la carpeta del backend y ejecutar el servidor en modo watch
 cd Backend
-pnpm start &
+npm start &
 
 # Guardar el PID del proceso del backend
 BACKEND_PID=$!
 
 # Navegar a la carpeta del frontend y ejecutar el servidor en modo watch
 cd ../Frontend
-pnpm run dev &
+npm run dev &
 
 # Guardar el PID del proceso del frontend
 FRONTEND_PID=$!
