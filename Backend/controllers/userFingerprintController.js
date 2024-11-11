@@ -1,5 +1,17 @@
 import UserFingerprint from '../models/userFingerptintModel.js';
 
+async function getNextFingerprintId() {
+    const fingerprints = await UserFingerprint.find({}, 'idFingerprint').sort('idFingerprint');
+    const usedIds = fingerprints.map(f => f.idFingerprint);
+    console.log("Used IDs:", usedIds);
+
+    for (let i = 0; i < 128; i++) {
+        if (!usedIds.includes(i)) return i;
+    }
+
+    throw new Error("No available fingerprint IDs");
+}
+
 // List of all user fingerprints
 export const getAllUserFingerprints = async (req, res) => {
     try {
@@ -24,14 +36,43 @@ export const getUserFingerprintById = async (req, res) => {
     }
 };
 
-// Create a new user fingerprint
-export const createUserFingerprint = async (req, res) => {
+export const startFingerprintRegistration = async (req, res) => {
     try {
-        const userFingerprint = new UserFingerprint(req.body);
-        const result = await userFingerprint.save();
-        res.status(201).send(result);
-    } catch (err) {
-        res.status(500).send(err);
+        const username = req.body.username;
+        const idFingerprint = await getNextFingerprintId();
+
+        console.log("ID Fingerprint:", idFingerprint);
+
+        const response = await fetch('http://192.168.68.114/sendData', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, idFingerprint })
+        });
+
+        if (response.ok) {
+            res.status(200).json({ message: "Fingerprint ID assigned and sent to ESP32", idFingerprint });
+        } else {
+            res.status(500).json({ message: "Failed to send data to ESP32" });
+        }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// Create a new user fingerprint
+export const confirmFingerprintRegistration = async (req, res) => {
+    try {
+        const { idFingerprint, username } = req.body;
+
+        const newFingerprint = new UserFingerprint({
+            username,
+            idFingerprint
+        });
+
+        await newFingerprint.save();
+        res.status(201).json({ message: "Fingerprint registered successfully", newFingerprint });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
     }
 };
 
@@ -48,3 +89,4 @@ export const deleteUserFingerprintById = async (req, res) => {
         res.status(500).send(err);
     }
 };
+

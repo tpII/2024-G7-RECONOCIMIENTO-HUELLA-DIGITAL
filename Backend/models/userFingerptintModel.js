@@ -1,9 +1,8 @@
 import mongoose from 'mongoose';
 
-//This is the schema for the user model for webApp
 const userFingerprintSchema = new mongoose.Schema({
     username: { type: String, required: true },
-    idFingerprint: { type: String, required: true },
+    idFingerprint: { type: Number, required: true, unique: true },
 });
 
 const UserFingerprint = mongoose.model('UserFingerprint', userFingerprintSchema);

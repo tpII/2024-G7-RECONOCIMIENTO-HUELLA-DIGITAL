@@ -34,6 +34,10 @@ router.post("/logout", AuthController.logout);
 router.get('/users', AuthController.getAllUsers);
 router.get('/user-count', AuthController.getUserCount);
 router.post('/check-auth', AuthController.checkAuth);
+router.get('/users/:id', AuthController.getUserById);
+router.put('/users/:id', AuthController.updateUser);
+router.delete('/users/:id', AuthController.deleteUser);
+
 
 export default router;
 
