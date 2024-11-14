@@ -7,12 +7,11 @@ const router = express.Router();
 router.post("/signup", async (req, res) => {
     try {
         let result = await AuthController.signup(req.body);
-        res.send(result).status(201);
+        res.status(201).json(result);
     } catch (err) {
-        res.status(400).send(err.message);
+        res.status(400).json({ message: err.message });
     }
-}
-);
+});
 
 router.post("/login", async (req, res) => {
     try {
@@ -25,7 +24,7 @@ router.post("/login", async (req, res) => {
             })
             .send({ user, token }).status(200);
     } catch (err) {
-        res.status(401).send(err.message);
+        res.status(401).json({ message: err.message });
     }
 }
 );

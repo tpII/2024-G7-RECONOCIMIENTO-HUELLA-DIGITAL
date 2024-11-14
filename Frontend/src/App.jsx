@@ -47,7 +47,7 @@ export default function App() {
       <Routes>
         {userCount === 0 ? (
           <>
-            <Route path="/signup" element={<Signup />} />
+            <Route path="/signup" element={<Signup setUserCount={setUserCount}/>} />
             <Route path="*" element={<Navigate to="/signup" />} />
           </>
         ) : (

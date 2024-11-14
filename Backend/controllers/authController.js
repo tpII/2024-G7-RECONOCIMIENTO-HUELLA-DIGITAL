@@ -9,18 +9,21 @@ export class AuthController {
         Validation.email(email);
         Validation.password(password);
 
-        const newUser = await User.findOne({ email });
-        if (newUser) {
+        const existingUser = await User.findOne({ email });
+        if (existingUser) {
             throw new Error("User already exists");
         }
 
         const hashedPassword = await bcrypt.hash(password, parseInt(process.env.SALT_ROUNDS));
 
-        new User({
+        const newUser = new User({
             username,
             email,
             password: hashedPassword
-        }).save();
+        });
+
+        const savedUser = await newUser.save();
+        return savedUser;
     }
 
     static async login({ email, password }) {

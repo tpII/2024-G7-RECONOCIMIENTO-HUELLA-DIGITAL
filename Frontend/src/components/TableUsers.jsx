@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import { useEffect, useState } from "react";
 import {
   Table,
@@ -18,9 +19,14 @@ import {
 import EditIcon from "../icons/Edit";
 import DeleteIcon from "../icons/Delete";
 
-export default function TableUsers() {
+export default function TableUsers({ isCreateOpen, onCreateClose }) {
   const [users, setUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
+  const [newUser, setNewUser] = useState({
+    username: "",
+    email: "",
+    password: "",
+  });
   const {
     isOpen: isEditOpen,
     onOpen: onEditOpen,
@@ -62,17 +68,79 @@ export default function TableUsers() {
     onDeleteOpen();
   };
 
-  const handleSave = (event) => {
+  const handleSave = async (event) => {
     event.preventDefault();
-    // Aquí implementarías la lógica para guardar los cambios
+    try {
+      const response = await fetch(
+        `http://localhost:5050/api/auth/users/${selectedUser._id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(selectedUser),
+        }
+      );
+      if (response.ok) {
+        const updatedUser = await response.json();
+        setUsers((prevUsers) =>
+          prevUsers.map((user) =>
+            user._id === updatedUser._id ? updatedUser : user
+          )
+        );
+        onEditClose();
+      } else {
+        console.error("Failed to update user");
+      }
+    } catch (error) {
+      console.error("Error updating user:", error);
+    }
     console.log("Save changes:", selectedUser);
     onEditClose();
   };
 
-  const confirmDelete = () => {
-    // Aquí implementarías la lógica para borrar el usuario
-    console.log("Delete user:", selectedUser?._id);
-    onDeleteClose();
+  const handleCreate = async (event) => {
+    event.preventDefault();
+    try {
+      const response = await fetch("http://localhost:5050/api/auth/signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newUser),
+      });
+      if (response.ok) {
+        const createdUser = await response.json();
+        setUsers((prevUsers) => [...prevUsers, createdUser]);
+        setNewUser({ username: "", email: "", password: "" });
+        onCreateClose();
+      } else {
+        console.error("Failed to create user");
+      }
+    } catch (error) {
+      console.error("Error creating user:", error);
+    }
+  };
+
+  const confirmDelete = async () => {
+    try {
+      const response = await fetch(
+        `http://localhost:5050/api/auth/users/${selectedUser._id}`,
+        {
+          method: "DELETE",
+        }
+      );
+      if (response.ok) {
+        setUsers((prevUsers) =>
+          prevUsers.filter((user) => user._id !== selectedUser._id)
+        );
+        onDeleteClose();
+      } else {
+        console.error("Failed to delete user");
+      }
+    } catch (error) {
+      console.error("Error deleting user:", error);
+    }
   };
 
   return (
@@ -177,6 +245,51 @@ export default function TableUsers() {
                 </Button>
                 <Button color="primary" type="submit">
                   Guardar
+                </Button>
+              </ModalFooter>
+            </form>
+          )}
+        </ModalContent>
+      </Modal>
+
+      {/* Modal de Creación */}
+      <Modal isOpen={isCreateOpen} onClose={onCreateClose}>
+        <ModalContent>
+          {(onClose) => (
+            <form onSubmit={handleCreate}>
+              <ModalHeader className="flex flex-col gap-1">
+                Crear Usuario
+              </ModalHeader>
+              <ModalBody>
+                <Input
+                  label="Username"
+                  value={newUser.username}
+                  onChange={(e) =>
+                    setNewUser({ ...newUser, username: e.target.value })
+                  }
+                />
+                <Input
+                  label="Email"
+                  value={newUser.email}
+                  onChange={(e) =>
+                    setNewUser({ ...newUser, email: e.target.value })
+                  }
+                />
+                <Input
+                  label="Password"
+                  type="password"
+                  placeholder="Contraseña"
+                  onChange={(e) =>
+                    setNewUser({ ...newUser, password: e.target.value })
+                  }
+                />
+              </ModalBody>
+              <ModalFooter>
+                <Button color="danger" variant="light" onPress={onClose}>
+                  Cancelar
+                </Button>
+                <Button color="primary" type="submit">
+                  Crear
                 </Button>
               </ModalFooter>
             </form>

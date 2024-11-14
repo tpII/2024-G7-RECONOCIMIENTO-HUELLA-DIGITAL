@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import {
   Card,
   CardHeader,
@@ -7,15 +8,13 @@ import {
   Button,
 } from "@nextui-org/react";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 
-export default function Signup() {
+export default function Signup({setUserCount}) {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -33,23 +32,11 @@ export default function Signup() {
       });
 
       if (!response.ok) {
-        // Lee el cuerpo una vez como texto
-        const errorText = await response.text();
-        
-        // Intenta parsearlo como JSON
-        let errorMessage;
-        try {
-          const errorData = JSON.parse(errorText);
-          errorMessage = errorData.message || "Something went wrong";
-        } catch {
-          // Si no es JSON, usa el texto plano
-          errorMessage = errorText;
-        }
-        throw new Error(errorMessage);
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Signup failed");
       }
-
+      setUserCount(1);
       setSuccess("Signup successful! Redirecting...");
-      navigate("/");
     } catch (error) {
       setError(error.message);
     }
