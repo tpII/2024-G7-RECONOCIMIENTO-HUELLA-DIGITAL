@@ -3,7 +3,6 @@ import UserFingerprint from '../models/userFingerptintModel.js';
 async function getNextFingerprintId() {
     const fingerprints = await UserFingerprint.find({}, 'idFingerprint').sort('idFingerprint');
     const usedIds = fingerprints.map(f => f.idFingerprint);
-    console.log("Used IDs:", usedIds);
 
     for (let i = 0; i < 128; i++) {
         if (!usedIds.includes(i)) return i;
@@ -41,7 +40,6 @@ export const startFingerprintRegistration = async (req, res) => {
         const username = req.body.username;
         const idFingerprint = await getNextFingerprintId();
 
-        console.log("ID Fingerprint:", idFingerprint);
 
         const response = await fetch('http://192.168.68.114/sendData', {
             method: 'POST',
@@ -77,9 +75,32 @@ export const confirmFingerprintRegistration = async (req, res) => {
 };
 
 // Delete a user fingerprint by ID
-export const deleteUserFingerprintById = async (req, res) => {
+export const startDeleteFingerprint = async (req, res) => {
     try {
-        const result = await UserFingerprint.findByIdAndDelete(req.params.id);
+        const { idFingerprint } = req.body;
+
+        const response = await fetch('http://192.168.68.114/deleteFingerprint', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ idFingerprint })
+        });
+
+        if (response.ok) {
+            res.status(200).json({ message: "Fingerprint ID sent to ESP32 for deletion", idFingerprint });
+        } else {
+            res.status(500).json({ message: "Failed to send data to ESP32" });
+        }
+    } catch (err) {
+        res.status(500).send(err);
+    }
+
+};
+
+export const confirmDeleteFingerprint = async (req, res) => {
+    try {
+        const { idFingerprint } = req.body;
+
+        const result = await UserFingerprint.findOneAndDelete({ idFingerprint });
         if (result) {
             res.status(200).send(result);
         } else {
@@ -89,4 +110,3 @@ export const deleteUserFingerprintById = async (req, res) => {
         res.status(500).send(err);
     }
 };
-

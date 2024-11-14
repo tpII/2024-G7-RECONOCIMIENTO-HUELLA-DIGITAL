@@ -1,26 +1,33 @@
-import { useState } from "react";
-import {
-  Button,
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  useDisclosure,
-  Input,
-  Link,
-} from "@nextui-org/react";
+import { useState } from 'react';
+import { Button, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure, Input, Link } from "@nextui-org/react";
 import Plus from "../icons/Plus";
 import TableUsersFingerprint from "../components/TableUsersFingerprint";
 
 export default function UsersFingerprint() {
+  const [username, setUsername] = useState('');
+  const { isOpen: isCreateOpen, onOpen: onCreateOpen, onClose: onCreateClose } = useDisclosure();
 
-  const {
-    isOpen: isCreateOpen,
-    onOpen: onCreateOpen,
-    onClose: onCreateClose,
-  } = useDisclosure();
-
+  const handleCreate = async (event) => {
+    event.preventDefault();
+    try {
+      const response = await fetch("http://localhost:5050/usersFingerprint/startRegistration", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ username }),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        console.log("Registration started:", data);
+        onCreateClose();
+      } else {
+        console.error("Failed to start registration");
+      }
+    } catch (error) {
+      console.error("Error starting registration:", error);
+    }
+  };
 
   return (
     <div className="flex flex-col space-y-4 h-full">
@@ -46,36 +53,26 @@ export default function UsersFingerprint() {
       </div>
 
       {/* Modal de Creación */}
-      <Modal isOpen={isCreateOpen} onClose={onCreateClose} size="3xl">
+      <Modal isOpen={isCreateOpen} onClose={onCreateClose}>
         <ModalContent>
           {(onClose) => (
-            <form>
+            <form onSubmit={handleCreate}>
               <ModalHeader className="flex flex-col gap-1">
                 Crear Usuario
               </ModalHeader>
               <ModalBody>
                 <Input
                   label="Username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
                   placeholder="Ingrese el nombre de usuario"
-                  size="lg"
-                />
-                <Input
-                  label="Email"
-                  placeholder="Ingrese el correo electrónico"
-                  size="lg"
-                />
-                <Input
-                  label="Password"
-                  type="password"
-                  placeholder="Ingrese la contraseña"
-                  size="lg"
                 />
               </ModalBody>
               <ModalFooter>
-                <Button color="danger" variant="light" onPress={onClose} size="lg">
+                <Button color="danger" variant="light" onPress={onClose}>
                   Cancelar
                 </Button>
-                <Button color="primary" type="submit" size="lg">
+                <Button color="primary" type="submit">
                   Crear
                 </Button>
               </ModalFooter>

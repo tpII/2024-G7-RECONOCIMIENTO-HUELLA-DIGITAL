@@ -2,9 +2,10 @@ import express from 'express';
 import {
     getAllUserFingerprints,
     getUserFingerprintById,
-    deleteUserFingerprintById,
     startFingerprintRegistration,
-    confirmFingerprintRegistration
+    confirmFingerprintRegistration,
+    startDeleteFingerprint,
+    confirmDeleteFingerprint
 } from '../controllers/userFingerprintController.js';
 
 const router = express.Router();
@@ -15,8 +16,11 @@ router.get("/", getAllUserFingerprints);
 // Get a specific user fingerprint (By ID)
 router.get("/:id", getUserFingerprintById);
 
-// Delete a user fingerprint by ID
-router.delete("/:id", deleteUserFingerprintById);
+// Start fingerprint deletion
+router.delete("/startDelete", startDeleteFingerprint);
+
+// Confirm fingerprint deletion
+router.post("/confirmDelete", confirmDeleteFingerprint)
 
 // Create a new user fingerprint (Send data to ESP32)
 router.post('/startRegistration', startFingerprintRegistration);
