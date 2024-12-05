@@ -2,6 +2,7 @@
 import Log from '../models/logModel.js';
 import nodemailer from 'nodemailer';
 import moment from "moment"; // Librería para manejar fechas (instala con npm install moment)
+import { subscribe, sendNotification} from './webPushController.js';
 
 
 //Configuracones VAPID y nodemailer
@@ -44,6 +45,7 @@ export const sendTestEmail = async (req, res) => {
           `,
     });
 
+
     res.status(200).send(info);
   } catch (err) {
     res.status(500).send({ error: err.message });
@@ -84,8 +86,47 @@ export const getLogById = async (req, res) => {
 export const createLog = async (req, res) => {
     try {
         const log = new Log(req.body);
+        console.log(req.body.success);
         const result = await log.save();
-        res.status(201).send(result);
+
+        // Send an email if the log is a failed attempt
+       // if (!req.body.success) {
+            const timestamp = moment().format("YYYY-MM-DD HH:mm:ss");
+            const info = await transporter.sendMail({
+                from: '"Sistema de Control de Acceso" <support@smitecodes.com>',
+                to: "jeroratusny@gmail.com, rodriguezmesamariano@gmail.com",
+                subject: "🚨 Alerta de Intento de Acceso No Autorizado 🚨",
+                text: `Se ha detectado un intento de acceso no autorizado a su sistema el ${timestamp}. Si no reconoce esta actividad, por favor contacte a soporte técnico.`,
+                html: `
+                      <h1 style="color: #d32f2f;">Alerta de Seguridad</h1>
+                      <p>Estimado usuario,</p>
+                      <p>
+                        Se ha detectado un intento de acceso no autorizado a su sistema el 
+                        <b>${timestamp}</b>.
+                      </p>
+                      <p>Si no reconoce esta actividad, por favor:</p>
+                      <ul>
+                        <li>Verifique sus credenciales y cámbielas si es necesario.</li>
+                        <li>Contacte a nuestro equipo de soporte técnico de inmediato.</li>
+                      </ul>
+                      <p>Atentamente,</p>
+                      <p><b>Sistema de Control de Acceso</b></p>
+                    `,
+                  })
+                  res.status(200).send(info);
+        
+                  //sendNotification();
+             //   }
+        
+
+      //   else {
+           // send not authorized http status
+       //     res.status(201).send("Authorized access");
+        // }
+
+
+
+
     } catch (err) {
         res.status(500).send(err);
     }

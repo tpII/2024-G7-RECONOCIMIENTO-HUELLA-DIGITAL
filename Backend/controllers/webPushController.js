@@ -39,7 +39,14 @@ export const subscribe = async (req, res) => {
 
 export const sendNotification = async (req, res) => {
   try {
-    const payload = req.body;
+    //const payload = req.body;
+    const myObject = {
+      title: "Test",
+      body: "test",
+    };
+
+    // Convertir el objeto a una cadena JSON
+    const payload = JSON.stringify(myObject);
     const validSubscriptions = subscriptions.filter(
       (subscription) => subscription.endpoint
     );

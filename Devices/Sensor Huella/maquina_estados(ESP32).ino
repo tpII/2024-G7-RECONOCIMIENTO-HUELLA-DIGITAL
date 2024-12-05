@@ -1,7 +1,11 @@
 #include <Adafruit_Fingerprint.h>
 #include "pitches.h"
 #include <Wire.h>
-#include "rgb_lcd.h"
+#include <rgb_lcd.h>
+#include <WiFi.h>
+#include <WebServer.h>
+#include <ArduinoJson.h>
+#include <HTTPClient.h>
 
 HardwareSerial mySerial(2);
 
@@ -16,7 +20,7 @@ Adafruit_Fingerprint finger = Adafruit_Fingerprint(&mySerial);
 #define espera 300
 #define duracion 500  // 5 segundos
 // BUZZER //////////////////////////////////
-#define BUZZZER_PIN  5
+#define BUZZZER_PIN 5
 
 // LCD /////////////////////////////////////
 rgb_lcd lcd;
@@ -26,62 +30,79 @@ int colorB = 255;
 int tamDisplay = 16;
 
 byte check[8] = {
-B00000,
-B00001,
-B00001,
-B00010,
-B00010,
-B00100,
-B10100,
-B01000,
+  B00000,
+  B00001,
+  B00001,
+  B00010,
+  B00010,
+  B00100,
+  B10100,
+  B01000,
 };
 
 byte neg[8] = {
-B00000,
-B10001,
-B01010,
-B00100,
-B00100,
-B01010,
-B10001,
-B00000,
+  B00000,
+  B10001,
+  B01010,
+  B00100,
+  B00100,
+  B01010,
+  B10001,
+  B00000,
 };
 
 
 // HUELLA DACTILAR /////////////////////////
-uint8_t p=0;
+uint8_t p = 0;
 uint8_t fingerPresentCount = 0;  // Contador para verificar si realmente hay un dedo
-uint8_t estado = 1;  // Estado inicial (1: Lectura constante)
-uint8_t id;
-uint8_t nuevoEstado=0;
+uint8_t estado = 1;              // Estado inicial (1: Lectura constante)
+//uint8_t id;
+uint8_t nuevoEstado = 0;
 uint8_t aux = 1;
 ///////////////////////////////////////////
 
+// WIFI ////////////////////////////////
+
+// Configuración de la red WiFi
+const char* ssid = "Marian's Room";
+const char* password = "Mariansexo1551";
+
+// Crear el servidor HTTP en el puerto 80
+WebServer server(80);
+
+// Recibidos en Peticiones
+String username;
+int fingerprintId;
+////////////////////////////////////////
+
+
 void apagarRGB() {
   pinMode(RGB_RED, 255);
-  pinMode(RGB_GREEN,255);
+  pinMode(RGB_GREEN, 255);
   pinMode(RGB_BLUE, 255);
   delay(200);
 }
 
 void setup() {
+
   // LED SETUP
   pinMode(RGB_RED, OUTPUT);
   pinMode(RGB_GREEN, OUTPUT);
   pinMode(RGB_BLUE, OUTPUT);
   // LCD SETUP
-  lcd.begin(16, 2);  // Inicializa el LCD
+  lcd.begin(16, 2);                    // Inicializa el LCD
   lcd.setRGB(colorR, colorG, colorB);  // Establece el color del fondo
-  lcd.createChar(0,check);
-  lcd.createChar(1,neg);
+  lcd.createChar(0, check);
+  lcd.createChar(1, neg);
 
   // Fijar el texto en la segunda fila
   lcd.setCursor(6, 1);  // Coloca el cursor en la segunda fila
   continuoLCD();
-  
+
   // HUELLA Y SERIAL SETUP
   Serial.begin(115200);
-  while(!Serial);
+  while (!Serial)
+    ;
   delay(1000);
   Serial.println("Inicializando sensor de huellas...");
   mySerial.begin(57600, SERIAL_8N1, 16, 17);
@@ -99,6 +120,92 @@ void setup() {
     Serial.println("No se puede conectar con el sensor de huellas.");
     while (1) { delay(1); }  // Espera indefinidamente si el sensor no se conecta
   }
+
+  // WIFI Setup
+  WiFi.begin(ssid, password);
+  Serial.println("Estableciendo conexión a WiFi...");
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(1000);
+    Serial.print(".");
+  }
+  Serial.print("\nConectado a la red con IP: ");
+  Serial.println(WiFi.localIP());
+
+  // Endpoints
+  server.on("/sendData", HTTP_POST, []() {
+    if (server.hasArg("plain")) {
+      String body = server.arg("plain");
+
+      // Parseo del JSON
+      StaticJsonDocument<200> doc;
+      DeserializationError error = deserializeJson(doc, body);
+      if (error) {
+        server.send(400, "application/json", "{\"message\":\"Invalid JSON\"}");
+        Serial.println("Error al parsear JSON");
+        return;
+      }
+
+      // Asignar valores de JSON a variables
+      username = doc["username"].as<String>();
+      fingerprintId = doc["idFingerprint"].as<int>();
+
+      Serial.println("Datos recibidos:");
+      Serial.println("Username: " + username);
+      Serial.print("ID de Huella: ");
+      Serial.println(fingerprintId);
+
+      // Cambiar estado para iniciar el proceso de registro de huella
+      estado = 2;
+
+      server.send(200, "text/plain", "Datos recibidos y procesados en ESP32");
+    } else {
+      server.send(400, "application/json", "{\"message\":\"No JSON data found\"}");
+    }
+  });
+
+  server.on("/deleteFingerprint", HTTP_DELETE, []() {
+     if (server.hasArg("plain")) {
+      String body = server.arg("plain");
+
+      // Parseo del JSON
+      StaticJsonDocument<200> doc;
+      DeserializationError error = deserializeJson(doc, body);
+      if (error) {
+        server.send(400, "application/json", "{\"message\":\"Invalid JSON\"}");
+        Serial.println("Error al parsear JSON");
+        return;
+      }
+
+      // Asignar valores de JSON a variables
+      fingerprintId = doc["idFingerprint"].as<int>();
+
+      Serial.println("Datos recibidos para borrar la huella:");
+      Serial.print("ID de Huella: ");
+      Serial.println(fingerprintId);
+
+      estado = 3;
+
+    server.send(200, "text/plain", "Delete recibido en ESP32");
+    Serial.println("Delete Recibido");
+  }
+});
+
+  server.on("/deleteBD", HTTP_POST, []() {
+    estado = 4;
+    server.send(200, "text/plain", "Delete BD recibido en ESP32");
+    Serial.println("Delete BD Recibido");
+  });
+
+  
+
+  server.on("/contHuellas", HTTP_POST, []() {
+    estado = 5;
+    server.send(200, "text/plain", "CantHuellas");
+    Serial.println("CantHuellas recibido");
+  });
+
+  // Iniciar el servidor
+  server.begin();
 }
 
 uint8_t readnumber(void) {
@@ -113,20 +220,26 @@ uint8_t readnumber(void) {
 }
 
 void loop() {
-  if (Serial.available() > 0){
-    aux = Serial.parseInt();
-  }
-  if (aux != estado) {  
-    nuevoEstado = aux;
-    if (nuevoEstado >= 1 && nuevoEstado <= 5) {
-      estado = nuevoEstado;  
-      Serial.print("Cambiando al estado: ");
-      Serial.println(estado);
-    }
-  } 
+  server.handleClient();  // Manejar peticiones de los clientes
+  // NOTA -> Comentado ya que si el swapeo de estados se hace mediante peticiones, no hace falta
+  // chequear Serial.
+
+  // if (Serial.available() > 0) {
+  //   aux = Serial.parseInt();
+  // }
+  // if (aux != estado) {
+  //   nuevoEstado = aux;
+  //   if (nuevoEstado >= 1 && nuevoEstado <= 5) {
+  //     estado = nuevoEstado;
+  //     Serial.print("Cambiando al estado: ");
+  //     Serial.println(estado);
+  //   }
+  // }
+
   // Máquina de estados
   switch (estado) {
     case 1:
+      continuoLCD();
       LecturaConstante();
       estado = 1;
       break;
@@ -150,18 +263,19 @@ void loop() {
       estado = 1;
       break;
   }
-  delay(1000);  
+  delay(1000);
 }
 
-uint8_t LecturaConstante() {
-  continuoLCD();
-  p = finger.getImage();
+uint8_t detectarHuella() {
+  p = finger.getImage();  // Captura la imagen de la huella
+
   if (p == FINGERPRINT_OK) {
-    p = finger.image2Tz();  // Convertir imagen a plantilla
+    p = finger.image2Tz();  // Convierte la imagen a plantilla
+
     switch (p) {
       case FINGERPRINT_OK:
         Serial.println("Imagen convertida en plantilla");
-        break;
+        return FINGERPRINT_OK;  // Retornar OK si la plantilla se creó correctamente
       case FINGERPRINT_IMAGEMESS:
         Serial.println("La imagen tomada no es buena");
         return p;
@@ -169,57 +283,123 @@ uint8_t LecturaConstante() {
         Serial.println("Error de comunicación");
         return p;
       case FINGERPRINT_FEATUREFAIL:
-        Serial.println("No hay dedo presente");
-        return p;
       case FINGERPRINT_INVALIDIMAGE:
-        Serial.println("No hay dedo presente");
+        Serial.println("No hay dedo presente o imagen inválida");
         return p;
       default:
         Serial.println("Error desconocido");
         return p;
     }
-      p = finger.fingerFastSearch();  // Buscar la huella en la base de datos
-      if (p == FINGERPRINT_OK) {
-        huellaEncontrada();
-      } else if (p == FINGERPRINT_PACKETRECIEVEERR) {
-        Serial.println("Error de comunicacion");
-        return p;
-      } else if (p == FINGERPRINT_NOTFOUND) {
-        huellaNoEncontrada(); 
-        return p;
-      } else {
-        Serial.println("Error desconocido");
-        return p;
-      } 
   } else if (p == FINGERPRINT_NOFINGER) {
     Serial.println("No hay dedo presente.");
+    return p;
   } else {
     Serial.println("Error al leer el sensor.");
+    return p;
   }
 }
+
+// Función para buscar la huella en la base de datos
+uint8_t buscarHuella() {
+  p = finger.fingerFastSearch();  // Busca la huella en la base de datos
+
+  if (p == FINGERPRINT_OK) {
+    huellaEncontrada();  // Llama a la función que maneja la huella encontrada
+    return FINGERPRINT_OK;
+  } else if (p == FINGERPRINT_PACKETRECIEVEERR) {
+    Serial.println("Error de comunicación");
+    return p;
+  } else if (p == FINGERPRINT_NOTFOUND) {
+    huellaNoEncontrada();  // Llama a la función que maneja la huella no encontrada
+    return p;
+  } else {
+    Serial.println("Error desconocido");
+    return p;
+  }
+}
+
+void LecturaConstante() {
+  uint8_t resultado = detectarHuella();
+
+  if (resultado == FINGERPRINT_OK) {
+    // Si se detectó y convirtió correctamente la huella, procede a buscarla
+    Serial.println("Huella detectada y convertida a plantilla, intentando búsqueda en BD...");
+    buscarHuella();
+  } else {
+    // Si no se detectó una huella válida, maneja otros posibles errores
+    Serial.println("No se pudo detectar una huella válida.");
+  }
+}
+
+
+void sendEmail(int success, int idUserFingerprint) {
+  // Enviar datos al servidor backend
+    if (WiFi.status() == WL_CONNECTED) {
+        HTTPClient http;
+        String serverURL = "http://192.168.3.213:5050/logs/";  // Cambia a la IP de tu backend
+        http.begin(serverURL);
+        http.addHeader("Content-Type", "application/json");
+
+        // timestamp
+        unsigned long timestamp = millis();
+        // Crear el cuerpo de la solicitud con JSON
+        int id = -1;
+        String jsonPayload = "{\"success\":\"" + success + "\",\"timestamp\":" + timestamp + ",\"idUserFingerprint\":" + idUserFingerprint + "}";
+
+        // Enviar solicitud POST
+        int httpResponseCode = http.POST(jsonPayload);
+        Serial.println(httpResponseCode);
+
+        // Revisar el código de respuesta
+        if (httpResponseCode > 0) {
+          Serial.print("HTTP Response code: ");
+          Serial.println(httpResponseCode);
+          Serial.println("Datos enviados correctamente al servidor");
+        } else {
+          Serial.print("Error al enviar datos: ");
+          Serial.println(http.errorToString(httpResponseCode).c_str());
+        }
+
+        // Finalizar solicitud
+        http.end();
+      } else {
+        Serial.println("Error: No hay conexión Wi-Fi");
+      }
+}
+
+
 
 void huellaEncontrada() {
   casoEXITO();
   Serial.println("Huella encontrada en la base de datos.");
   Serial.print("ID: ");
   Serial.println(finger.fingerID);
-  Serial.print("Confiabilidad de "); 
+  Serial.print("Confiabilidad de ");
   Serial.println(finger.confidence);
+
+  // Enviar datos al servidor backend 
+  sendEmail(1, finger.fingerID);
+
 }
+
 
 void huellaNoEncontrada() {
   casoFALLO();
+
+   sendEmail(0, -1);
+  
   Serial.println("Huella no encontrada.");
 }
 
+
+
 uint8_t RegistrarHuella() {
   int p = -1;
-  id = CantidadHuellas();
   Serial.print("Guardando huella con numero de ID #");
-  Serial.println(id);
+  Serial.println(fingerprintId);
+
+  // Captura inicial de huella
   while (p != FINGERPRINT_OK) {
-    Serial.println("Apoye el dedo e ingrese 1");
-    readnumber();
     p = finger.getImage();
     switch (p) {
       case FINGERPRINT_OK:
@@ -238,114 +418,105 @@ uint8_t RegistrarHuella() {
         break;
     }
   }
+
   Serial.println("Momento de convertir la imagen");
   p = finger.image2Tz(1);
-  switch (p) {
-    case FINGERPRINT_OK:
-      Serial.println("Imagen convertida en plantilla!");
-      break;
-    case FINGERPRINT_IMAGEMESS:
-      Serial.println("La imagen tomada no es buena");
-      return p;
-    case FINGERPRINT_PACKETRECIEVEERR:
-      Serial.println("Error de comunicación");
-      return p;
-    case FINGERPRINT_FEATUREFAIL:
-      Serial.println("No se pudieron encontrar las caracteristicas de esta huella");
-      return p;
-    case FINGERPRINT_INVALIDIMAGE:
-      Serial.println("No se pudieron encontrar las caracteristicas de esta huella");
-      return p;
-    default:
-      Serial.println("Error de comunicación");
-      return p;
-  }
+  if (p != FINGERPRINT_OK) return p;  // Retorna si falla la conversión de imagen
+  
   delay(500);
   p = -1;
+
+  // Segunda captura de huella
   Serial.println("Coloque el mismo dedo de nuevo e ingrese 1");
-  readnumber();
   while (p != FINGERPRINT_OK) {
     p = finger.getImage();
-    switch (p) {
-      case FINGERPRINT_OK:
-        Serial.println("Imagen tomada");
-        break;
-      case FINGERPRINT_NOFINGER:
-        break;
-      case FINGERPRINT_PACKETRECIEVEERR:
-        Serial.println("Error de comunicacion");
-        break;
-      case FINGERPRINT_IMAGEFAIL:
-        Serial.println("Error de imagen");
-        break;
-      default:
-        Serial.println("Error desconocido");
-        break;
-    }
+    if (p == FINGERPRINT_OK) Serial.println("Imagen tomada");
   }
-  // OK success!
+
   p = finger.image2Tz(2);
-  switch (p) {
-    case FINGERPRINT_OK:
-      Serial.println("Imagen convertida en plantilla!");
-      break;
-    case FINGERPRINT_IMAGEMESS:
-      Serial.println("La imagen tomada no es buena");
-      return p;
-    case FINGERPRINT_PACKETRECIEVEERR:
-      Serial.println("Error de comunicación");
-      return p;
-    case FINGERPRINT_FEATUREFAIL:
-      Serial.println("No se pudieron encontrar las caracteristicas de esta huella");
-      return p;
-    case FINGERPRINT_INVALIDIMAGE:
-      Serial.println("No se pudieron encontrar las caracteristicas de esta huella");
-      return p;
-    default:
-      Serial.println("Error desconocido");
-      return p;
-  }
+  if (p != FINGERPRINT_OK) return p;  // Retorna si falla la conversión de imagen
+  
   Serial.print("Creando modelo para la huella con ID: #");
-  Serial.println(id);
-  delay(250);
+  Serial.println(fingerprintId);
+
   p = finger.createModel();
-  if (p == FINGERPRINT_OK) {
-    Serial.println("Las huellas coinciden!");
-  } else if (p == FINGERPRINT_PACKETRECIEVEERR) {
-    Serial.println("Error de comunicación");
-    return p;
-  } else if (p == FINGERPRINT_ENROLLMISMATCH) {
-    Serial.println("Las huellas NO coiciden :(");
-    return p;
-  } else {
-    Serial.println("Error desconocido");
-    return p;
-  }
-  Serial.print("ID:");
-  Serial.println(id);
-  p = finger.storeModel(id);
+  if (p != FINGERPRINT_OK) return p;  // Retorna si las huellas no coinciden
+
+  p = finger.storeModel(fingerprintId);
   if (p == FINGERPRINT_OK) {
     Serial.println("La huella se almacenó correctamente");
-    id++; // Si la huella se almaceno correctamente se incrementa el ID
-  } else if (p == FINGERPRINT_PACKETRECIEVEERR) {
-    Serial.println("Error de comunicación");
-    return p;
-  } else if (p == FINGERPRINT_BADLOCATION) {
-    Serial.println("No se pudo guardar la huella, error en localización");
-    return p;
-  } else if (p == FINGERPRINT_FLASHERR) {
-    Serial.println("No se pudo guardar la huella, error escribiendo la huella en memoria");
-    return p;
+
+    // Enviar datos al servidor backend
+    if (WiFi.status() == WL_CONNECTED) {
+      HTTPClient http;
+      String serverURL = "http://192.168.68.102:5050/usersFingerprint/confirmRegistration";  // Cambia a la IP de tu backend
+      http.begin(serverURL);
+      http.addHeader("Content-Type", "application/json");
+
+      // Crear el cuerpo de la solicitud con JSON
+      String jsonPayload = "{\"username\":\"" + username + "\",\"idFingerprint\":" + String(fingerprintId) + "}";
+
+      // Enviar solicitud POST
+      int httpResponseCode = http.POST(jsonPayload);
+      Serial.println("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+      Serial.println(httpResponseCode);
+      Serial.println("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+
+      // Revisar el código de respuesta
+      if (httpResponseCode > 0) {
+        Serial.print("HTTP Response code: ");
+        Serial.println(httpResponseCode);
+        Serial.println("Datos enviados correctamente al servidor");
+      } else {
+        Serial.print("Error al enviar datos: ");
+        Serial.println(http.errorToString(httpResponseCode).c_str());
+      }
+
+      // Finalizar solicitud
+      http.end();
+    } else {
+      Serial.println("Error: No hay conexión Wi-Fi");
+    }
   } else {
-    Serial.println("Error desconocido");
-    return p;
+    Serial.println("Error al almacenar la huella");
   }
+
+  return p;
 }
 
 void BorrarHuella() {
-  Serial.print("Ingrese el ID de la huella a borrar, la huella 0 no se puede borrar: "); 
-  uint16_t id = readnumber();  
-  borrarHuellaEspecifica(id);  
+  borrarHuellaEspecifica(fingerprintId);
+
+    if (WiFi.status() == WL_CONNECTED) {
+    HTTPClient http;
+    String serverURL = "http://192.168.68.102:5050/usersFingerprint/confirmDelete";  // Cambia a la IP de tu backend
+    http.begin(serverURL);
+    http.addHeader("Content-Type", "application/json");
+
+    // Crear el cuerpo de la solicitud con JSON
+    String jsonPayload = "{\"idFingerprint\":" + String(fingerprintId) + "}";
+
+    // Enviar solicitud POST
+    int httpResponseCode = http.POST(jsonPayload);
+    Serial.println("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+    Serial.println(httpResponseCode);
+    Serial.println("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+
+    // Revisar el código de respuesta
+    if (httpResponseCode > 0) {
+      Serial.print("HTTP Response code: ");
+      Serial.println(httpResponseCode);
+      Serial.println("Datos enviados correctamente al servidor");
+    } else {
+      Serial.print("Error al enviar datos: ");
+      Serial.println(http.errorToString(httpResponseCode).c_str());
+    }
+
+    // Finalizar solicitud
+    http.end();
+  } else {
+    Serial.println("Error: No hay conexión Wi-Fi");
+  }
 }
 
 void borrarHuellaEspecifica(uint8_t id) {
@@ -370,7 +541,7 @@ void BorrarBaseDeDatos() {
   finger.emptyDatabase();
 }
 
-uint8_t CantidadHuellas(){
+uint8_t CantidadHuellas() {
   uint8_t p = finger.getTemplateCount();
   if (p == FINGERPRINT_OK) {
     Serial.print("Cantidad de huellas almacenadas: ");
@@ -391,7 +562,7 @@ int melodiaDenegado[] = {
   NOTE_B1, NOTE_B1, NOTE_B1, NOTE_B1
 };
 
-// Duraciones de las notas 
+// Duraciones de las notas
 int noteDurations[] = {
   4, 4, 4, 6
 };
@@ -402,32 +573,32 @@ void continuoLCD() {
   colorG = 0;
   colorB = 255;
   lcd.setRGB(colorR, colorG, colorB);
-  lcd.setCursor(0, 0);  
-  lcd.print(" Ingrese huella ");  
-  lcd.setCursor(7, 1);  
-  lcd.write("HORA");  
-  delay(350); 
+  lcd.setCursor(0, 0);
+  lcd.print(" Ingrese huella ");
+  lcd.setCursor(7, 1);
+  lcd.write("HORA");
+  delay(350);
 }
 
-void casoEXITO(){
-  int greenIntensity = 0; 
-  int blueIntensity = 255;     
-  int redIntensity = 255;      
+void casoEXITO() {
+  int greenIntensity = 0;
+  int blueIntensity = 255;
+  int redIntensity = 255;
   colorR = 0;
   colorG = 150;
   colorB = 0;
-  
+
   // Establecer los colores
   analogWrite(RGB_GREEN, greenIntensity);
   analogWrite(RGB_BLUE, blueIntensity);
   analogWrite(RGB_RED, redIntensity);
 
   lcd.setRGB(colorR, colorG, colorB);
-  lcd.setCursor(0, 0);  
-  lcd.print("ACCESO CORRECTO");  
-  lcd.setCursor(7, 1);  
-  lcd.print("               "); 
-  lcd.setCursor(7, 1); 
+  lcd.setCursor(0, 0);
+  lcd.print("ACCESO CORRECTO");
+  lcd.setCursor(7, 1);
+  lcd.print("               ");
+  lcd.setCursor(7, 1);
   lcd.write(byte(0));
 
   // Reproduce la melodía
@@ -442,26 +613,26 @@ void casoEXITO(){
   apagarRGB();
 }
 
-void casoFALLO(){
-  int greenIntensity = 255; 
-  int blueIntensity = 255;     
-  int redIntensity = 0;      
+void casoFALLO() {
+  int greenIntensity = 255;
+  int blueIntensity = 255;
+  int redIntensity = 0;
   colorR = 150;
   colorG = 0;
   colorB = 0;
-  
+
   // Establecer los colores
   analogWrite(RGB_GREEN, greenIntensity);
   analogWrite(RGB_BLUE, blueIntensity);
   analogWrite(RGB_RED, redIntensity);
 
   lcd.setRGB(colorR, colorG, colorB);
-  lcd.setCursor(0, 0);  
-  lcd.print("ACCESO DENEGADO");  
-  lcd.setCursor(7, 1);  
-  lcd.print("               "); 
-  lcd.setCursor(7, 1); 
-  lcd.write(byte(1));  
+  lcd.setCursor(0, 0);
+  lcd.print("ACCESO DENEGADO");
+  lcd.setCursor(7, 1);
+  lcd.print("               ");
+  lcd.setCursor(7, 1);
+  lcd.write(byte(1));
   delay(300);
 
   // Reproduce la melodía

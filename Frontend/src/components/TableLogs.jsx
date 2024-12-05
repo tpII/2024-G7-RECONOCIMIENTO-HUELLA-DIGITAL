@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import {
   Table,
   TableHeader,
@@ -9,143 +10,31 @@ import {
 } from "@nextui-org/react";
 
 export default function TableLogs() {
-  const rows = [
-    {
-      key: "1",
-      name: "Tony Reichert",
-      role: "CEO",
-      status: "Active",
-    },
-    {
-      key: "2",
-      name: "Zoey Lang",
-      role: "Technical Lead",
-      status: "Paused",
-    },
-    {
-      key: "3",
-      name: "Jane Fisher",
-      role: "Senior Developer",
-      status: "Active",
-    },
-    {
-      key: "4",
-      name: "William Howard",
-      role: "Community Manager",
-      status: "Vacation",
-    },
-    {
-      key: "5",
-      name: "Tony Reichert",
-      role: "CEO",
-      status: "Active",
-    },
-    {
-      key: "6",
-      name: "Zoey Lang",
-      role: "Technical Lead",
-      status: "Paused",
-    },
-    {
-      key: "7",
-      name: "Jane Fisher",
-      role: "Senior Developer",
-      status: "Active",
-    },
-    {
-      key: "8",
-      name: "William Howard",
-      role: "Community Manager",
-      status: "Vacation",
-    },
-    {
-      key: "9",
-      name: "Tony Reichert",
-      role: "CEO",
-      status: "Active",
-    },
-    {
-      key: "10",
-      name: "Zoey Lang",
-      role: "Technical Lead",
-      status: "Paused",
-    },
-    {
-      key: "11",
-      name: "Jane Fisher",
-      role: "Senior Developer",
-      status: "Active",
-    },
-    {
-      key: "12",
-      name: "William Howard",
-      role: "Community Manager",
-      status: "Vacation",
-    },
-    {
-      key: "13",
-      name: "Tony Reichert",
-      role: "CEO",
-      status: "Active",
-    },
-    {
-      key: "14",
-      name: "Zoey Lang",
-      role: "Technical Lead",
-      status: "Paused",
-    },
-    {
-      key: "15",
-      name: "Jane Fisher",
-      role: "Senior Developer",
-      status: "Active",
-    },
-    {
-      key: "16",
-      name: "William Howard",
-      role: "Community Manager",
-      status: "Vacation",
-    },
-    {
-      key: "17",
-      name: "Tony Reichert",
-      role: "CEO",
-      status: "Active",
-    },
-    {
-      key: "18",
-      name: "Zoey Lang",
-      role: "Technical Lead",
-      status: "Paused",
-    },
-    {
-      key: "19",
-      name: "Jane Fisher",
-      role: "Senior Developer",
-      status: "Active",
-    },
-    {
-      key: "20",
-      name: "William Howard",
-      role: "Community Manager",
-      status: "Vacation",
-    },
-  ];
+  const [rows, setRows] = useState([]); // Estado para almacenar los datos de la tabla
+
+  useEffect(() => {
+    // Realizar una solicitud GET a la API local
+    fetch("http://localhost:5050/logs")
+      .then((response) => response.json()) // Suponiendo que la respuesta es JSON
+      .then((data) => setRows(data)) // Actualiza el estado con los datos recibidos
+      .catch((error) => console.error("Error fetching data:", error)); // Manejo de errores
+  }, []); // El array vacío asegura que solo se ejecute al montar el componente
 
   const columns = [
     {
-      key: "name",
-      label: "NAME",
-    },
-    {
-      key: "role",
-      label: "ROLE",
-    },
-    {
-      key: "status",
+      key: "success",
       label: "STATUS",
     },
+    {
+      key: "timestamp",
+      label: "TIMESTAMP",
+    },
+    {
+      key: "idUserFingerprint",
+      label: "USER FINGERPRINT ID",
+    },
   ];
+
   return (
     <>
       <Table
@@ -167,15 +56,28 @@ export default function TableLogs() {
           )}
         </TableHeader>
         <TableBody items={rows}>
-          {(item) => (
-            <TableRow key={item.key}>
-              {(columnKey) => (
-                <TableCell className="text-white">
-                  {getKeyValue(item, columnKey)}
-                </TableCell>
-              )}
-            </TableRow>
-          )}
+          {(item) => {
+            const isAuthorized = item.success; // `success` es el valor que determina el color
+
+            return (
+              <TableRow
+                key={item._id}
+                className={`${
+                  isAuthorized ? "bg-green-700/85" : "bg-red-700/85"
+                }`}
+              >
+                {columns.map((column) => (
+                  <TableCell key={column.key} className="text-white">
+                    {column.key === "success"
+                      ? isAuthorized
+                        ? "Autorizado"
+                        : "No autorizado"
+                      : getKeyValue(item, column.key)}
+                  </TableCell>
+                ))}
+              </TableRow>
+            );
+          }}
         </TableBody>
       </Table>
     </>
