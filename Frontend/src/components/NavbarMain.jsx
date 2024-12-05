@@ -46,6 +46,69 @@ export default function NavbarMain({userData}) {
       }
     };
 
+    const enablePushNotifications = async (e) => {
+      e.preventDefault();
+      setError("");
+
+
+      try {
+        // Register the service worker
+        const registration = await navigator.serviceWorker.register(
+          "/service-worker.js"
+        );
+
+     
+     // FIX IT   console.log(process.env.REACT_APP_VAPID_PUBLIC);
+
+
+        // Subscribe to push notifications
+        const subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(
+            'BJcOL27Rzi1QTsAfjwmbKlkxa7dz3JHHWLFAwguOReRI_M9E0jA0ZEbWL9WyL4g-2mjezA_AwXmb0M62GQCF4m4'
+          ),
+        });
+
+        // Send the subscription object to the server
+        const response = await fetch(
+          "http://localhost:5050/webPush/subscribe/",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            credentials: "include",
+            body: JSON.stringify(subscription),
+          }
+        );
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || "Something went wrong");
+        } else {
+          alert("Push notifications enabled");
+        }
+      } catch (error) {
+        setError(error.message);
+      }
+    };
+
+    // Helper function to convert VAPID public key to Uint8Array
+    const urlBase64ToUint8Array = (base64String) => {
+      const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+      const base64 = (base64String + padding)
+        .replace(/-/g, "+")
+        .replace(/_/g, "/");
+
+      const rawData = window.atob(base64);
+      const outputArray = new Uint8Array(rawData.length);
+
+      for (let i = 0; i < rawData.length; ++i) {
+        outputArray[i] = rawData.charCodeAt(i);
+      }
+      return outputArray;
+    };
+
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const menuItems = ["Inicio", "Usuarios registrados", "Log Out"];
@@ -91,6 +154,11 @@ export default function NavbarMain({userData}) {
                 <DropdownItem key="profile" className="h-14 gap-2" textValue={userData.user.email}>
                   <p className="font-semibold">Signed in as</p>
                   <p className="font-semibold">{userData.user.email}</p>
+                </DropdownItem>
+
+                {/* enable push notifications button http post */}
+                <DropdownItem key="push" color="success" onClick={enablePushNotifications}>
+                  Enable Push Notifications
                 </DropdownItem>
                 <DropdownItem key="logout" color="danger" onClick={handleSubmit}>
                   Log Out

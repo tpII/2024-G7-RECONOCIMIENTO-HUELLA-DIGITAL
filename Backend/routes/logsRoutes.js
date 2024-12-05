@@ -3,7 +3,9 @@ import {
     getAllLogs,
     getLogById,
     createLog,
-    deleteLogById
+    deleteLogById,
+    sendTestEmail
+
 } from '../controllers/logController.js';
 
 const router = express.Router();
@@ -16,6 +18,9 @@ router.get("/:id", getLogById);
 
 // Create a new log
 router.post("/", createLog);
+
+// Send a test email
+router.post("/sendTestEmail", sendTestEmail);
 
 // Delete a log by ID
 router.delete("/:id", deleteLogById);
