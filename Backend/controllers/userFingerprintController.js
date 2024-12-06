@@ -22,6 +22,23 @@ export const getAllUserFingerprints = async (req, res) => {
     }
 };
 
+// Get a specific name of user fingerprint (By FingerPrint ID)
+
+export const getUsernameByFingerprintId = async (req, res) => {
+    try {
+
+        const userFingerprint = await UserFingerprint.findOne({ idFingerprint: req.params.id });
+        if (userFingerprint) {
+            res.status(200).send(userFingerprint.username);
+        } else {
+            res.status(404).send("NN");
+        }
+    } catch (err) {
+        res.status(500).send(err);
+    }
+}
+
+
 // Get a specific user fingerprint (By ID)
 export const getUserFingerprintById = async (req, res) => {
     try {

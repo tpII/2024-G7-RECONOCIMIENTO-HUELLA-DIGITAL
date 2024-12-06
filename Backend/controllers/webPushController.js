@@ -37,27 +37,45 @@ export const subscribe = async (req, res) => {
   }
 };
 
-export const sendNotification = async (req, res) => {
+export const unsubscribe = async (req, res) => {
   try {
-    //const payload = req.body;
+    const subscription = req.body;
+
+    if (!subscription || !subscription.endpoint) {
+      return res.status(400).send({ error: "Invalid subscription object" });
+    }
+
+    subscriptions = subscriptions.filter(
+      (sub) => sub.endpoint !== subscription.endpoint
+    );
+    res.status(200).send("Unsubscribed successfully");
+  } catch (err) {
+    res.status(500).send({ error: err.message });
+  }
+}
+
+export const sendNotification = async () => {
+  try {
     const myObject = {
-      title: "Test",
-      body: "test",
+      title: "Intento de acceso no autorizado detectado",
+      body: "Intento de acceso no autorizado detectado en su sistema",
+      icon: "path/to/icon.png",
+      url: "https://yourwebsite.com",
     };
 
-    // Convertir el objeto a una cadena JSON
     const payload = JSON.stringify(myObject);
     const validSubscriptions = subscriptions.filter(
       (subscription) => subscription.endpoint
     );
 
     if (validSubscriptions.length === 0) {
-      return res.status(400).send({ error: "No valid subscriptions found" });
+      console.error("No valid subscriptions found");
+      return { success: false, message: "No valid subscriptions found" };
     }
 
-    validSubscriptions.forEach(async (subscription) => {
+    for (const subscription of validSubscriptions) {
       try {
-        await webPush.sendNotification(subscription, JSON.stringify(payload));
+        await webPush.sendNotification(subscription, payload);
       } catch (error) {
         console.error(
           "Failed to send notification to subscription:",
@@ -65,12 +83,12 @@ export const sendNotification = async (req, res) => {
           error
         );
       }
-    });
+    }
 
-    res.status(200).send("Notification sent");
-
-    console.log("Notification sent:", req.body);
+    console.log("Notification sent:", myObject);
+    return { success: true, message: "Notification sent" };
   } catch (err) {
-    res.status(500).send({ error: err.message });
+    console.error("Error sending notification:", err);
+    return { success: false, message: err.message };
   }
 };

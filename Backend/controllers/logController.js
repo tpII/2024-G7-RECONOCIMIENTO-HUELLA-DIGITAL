@@ -89,8 +89,13 @@ export const createLog = async (req, res) => {
     console.log(req.body.success);
     const result = await log.save();
 
+    if (!req.body.success) {
+     const notificationResult = await sendNotification();
+     if (!notificationResult.success) {
+       console.error(notificationResult.message);
+     }
+
     // Send an email if the log is a failed attempt
-    // if (!req.body.success) {
     const timestamp = moment().format("YYYY-MM-DD HH:mm:ss");
     const info = await transporter.sendMail({
       from: '"Sistema de Control de Acceso" <support@smitecodes.com>',
@@ -115,14 +120,13 @@ export const createLog = async (req, res) => {
     })
     res.status(200).send(info);
 
-    //sendNotification();
-    //   }
+    }
 
 
-    //   else {
-    // send not authorized http status
-    //     res.status(201).send("Authorized access");
-    // }
+      else {
+     //send not authorized http status
+        res.status(201).send("Authorized access");
+    }
 
 
 

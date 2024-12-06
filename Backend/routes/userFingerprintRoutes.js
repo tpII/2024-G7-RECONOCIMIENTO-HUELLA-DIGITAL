@@ -5,8 +5,10 @@ import {
     startFingerprintRegistration,
     confirmFingerprintRegistration,
     startDeleteFingerprint,
-    confirmDeleteFingerprint
+    confirmDeleteFingerprint,
+    getUsernameByFingerprintId
 } from '../controllers/userFingerprintController.js';
+import { get } from 'mongoose';
 
 const router = express.Router();
 
@@ -15,6 +17,9 @@ router.get("/", getAllUserFingerprints);
 
 // Get a specific user fingerprint (By ID)
 router.get("/:id", getUserFingerprintById);
+
+// Get a specific user fingerprint (By ID)
+router.get("/getName/:id", getUsernameByFingerprintId);
 
 // Start fingerprint deletion
 router.delete("/startDelete", startDeleteFingerprint);
