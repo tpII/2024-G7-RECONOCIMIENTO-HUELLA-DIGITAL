@@ -1,4 +1,5 @@
 import UserFingerprint from '../models/userFingerptintModel.js';
+import { getEsp32Ip } from '../esp32Config.js';
 
 async function getNextFingerprintId() {
     const fingerprints = await UserFingerprint.find({}, 'idFingerprint').sort('idFingerprint');
@@ -39,9 +40,11 @@ export const startFingerprintRegistration = async (req, res) => {
     try {
         const username = req.body.username;
         const idFingerprint = await getNextFingerprintId();
+        const esp32Ip = await getEsp32Ip();
+        console.log(`esp32Ip: ${esp32Ip}`);
 
 
-        const response = await fetch('http://192.168.68.114/sendData', {
+        const response = await fetch(`http://${esp32Ip}/sendData`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username, idFingerprint })
@@ -79,7 +82,7 @@ export const startDeleteFingerprint = async (req, res) => {
     try {
         const { idFingerprint } = req.body;
 
-        const response = await fetch('http://192.168.68.114/deleteFingerprint', {
+        const response = await fetch(`http://${esp32Ip}/deleteFingerprint`, {
             method: 'DELETE',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ idFingerprint })
