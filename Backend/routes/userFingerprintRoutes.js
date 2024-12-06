@@ -6,7 +6,8 @@ import {
     confirmFingerprintRegistration,
     startDeleteFingerprint,
     confirmDeleteFingerprint,
-    getUsernameByFingerprintId
+    getUsernameByFingerprintId,
+    updateUserFingerprintUsername
 } from '../controllers/userFingerprintController.js';
 import { get } from 'mongoose';
 
@@ -32,5 +33,7 @@ router.post('/startRegistration', startFingerprintRegistration);
 
 // Confirm fingerprint registration (Save to database)
 router.post('/confirmRegistration', confirmFingerprintRegistration);
+
+router.put('/:id', updateUserFingerprintUsername);
 
 export default router;

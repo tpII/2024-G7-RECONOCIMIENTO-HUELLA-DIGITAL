@@ -90,9 +90,35 @@ export default function TableUsersFingerprint() {
 
   const handleSave = async (event) => {
     event.preventDefault();
+    try {
+      const response = await fetch(
+        `http://localhost:5050/usersFingerprint/${selectedUser._id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(selectedUser),
+        }
+      );
+      if (response.ok) {
+        const updatedUser = await response.json();
+        setUsersFingerprint((prevUsers) =>
+          prevUsers.map((user) =>
+            user._id === updatedUser._id ? updatedUser : user
+          )
+        );
+        onEditClose();
+      } else {
+        console.error("Failed to update user");
+      }
+    } catch (error) {
+      console.error("Error updating user:", error);
+    }
     console.log("Save changes:", selectedUser);
     onEditClose();
   };
+
   return (
     <>
       <Table

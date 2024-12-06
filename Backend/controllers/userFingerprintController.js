@@ -58,7 +58,6 @@ export const startFingerprintRegistration = async (req, res) => {
         const username = req.body.username;
         const idFingerprint = await getNextFingerprintId();
         const esp32Ip = await getEsp32Ip();
-        console.log(`esp32Ip: ${esp32Ip}`);
 
 
         const response = await fetch(`http://${esp32Ip}/sendData`, {
@@ -128,5 +127,23 @@ export const confirmDeleteFingerprint = async (req, res) => {
         }
     } catch (err) {
         res.status(500).send(err);
+    }
+};
+
+// Update username of a user fingerprint by ID
+export const updateUserFingerprintUsername = async (req, res) => {
+    const { id } = req.params;
+    const updateData = req.body;
+
+    try {
+        const userFingerprint = await UserFingerprint.findByIdAndUpdate(id, updateData, { new: true, runValidators: true });
+
+        if (userFingerprint) {
+            res.status(200).json({ message: "Username updated successfully", userFingerprint });
+        } else {
+            res.status(404).json({ message: "User fingerprint not found" });
+        }
+    } catch (err) {
+        res.status(500).json({ message: err.message });
     }
 };
