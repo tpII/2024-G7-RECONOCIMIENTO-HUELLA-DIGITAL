@@ -3,6 +3,7 @@
 #include <Wire.h>
 #include <rgb_lcd.h>
 #include <WiFi.h>
+#include <WiFiUdp.h>
 #include <WebServer.h>
 #include <ArduinoJson.h>
 #include <HTTPClient.h>
@@ -70,6 +71,14 @@ const char* password = "Mariansexo1551";
 // Crear el servidor HTTP en el puerto 80
 WebServer server(80);
 
+// Configuración del broadcast
+WiFiUDP udp;
+const int broadcastPort = 12345; // Puerto para el broadcast
+const char* broadcastMessage = "DISCOVER_BACKEND"; // Mensaje de descubrimiento
+
+// Variable global para guardar la dirección IP del backend
+String backendIP = "";
+
 // Recibidos en Peticiones
 String username;
 int fingerprintId;
@@ -130,6 +139,12 @@ void setup() {
   }
   Serial.print("\nConectado a la red con IP: ");
   Serial.println(WiFi.localIP());
+
+  // Inicializar el cliente UDP
+  udp.begin(broadcastPort);
+
+  // Enviar mensaje de broadcast
+  sendBroadcast();
 
   // Endpoints
   server.on("/sendData", HTTP_POST, []() {
@@ -208,6 +223,36 @@ void setup() {
   server.begin();
 }
 
+void sendBroadcast() {
+    Serial.println("Enviando mensaje de broadcast...");
+    udp.beginPacket("255.255.255.255", broadcastPort); // Broadcast a toda la red
+    udp.write((const uint8_t*)broadcastMessage, strlen(broadcastMessage));
+    udp.endPacket();
+    Serial.println("Mensaje de broadcast enviado");
+}
+
+void listenForResponse() {
+    int packetSize = udp.parsePacket();
+    if (packetSize) {
+        char incomingPacket[255];
+        int len = udp.read(incomingPacket, 255);
+        if (len > 0) {
+            incomingPacket[len] = '\0';
+        }
+
+        Serial.print("Respuesta recibida: ");
+        Serial.println(incomingPacket);
+
+        // Procesar respuesta para extraer la dirección IP del backend
+        if (strstr(incomingPacket, "BACKEND_IP:") != nullptr) {
+            backendIP = String(incomingPacket).substring(11); // Extraer la IP del backend
+            Serial.print("Dirección IP del backend almacenada: ");
+            Serial.println(backendIP);
+
+        }
+    }
+}
+
 uint8_t readnumber(void) {
   uint8_t num = 0;
   while (num == 0) {
@@ -221,6 +266,8 @@ uint8_t readnumber(void) {
 
 void loop() {
   server.handleClient();  // Manejar peticiones de los clientes
+  // Escuchar respuestas del servidor backend
+  listenForResponse();
   // NOTA -> Comentado ya que si el swapeo de estados se hace mediante peticiones, no hace falta
   // chequear Serial.
 
@@ -336,7 +383,7 @@ void sendEmail(int success, int idUserFingerprint) {
   // Enviar datos al servidor backend
     if (WiFi.status() == WL_CONNECTED) {
         HTTPClient http;
-        String serverURL = "http://192.168.3.213:5050/logs/";  // Cambia a la IP de tu backend
+        String serverURL = "http://" + backendIP + ":5050/logs/";
         http.begin(serverURL);
         http.addHeader("Content-Type", "application/json");
 
@@ -344,7 +391,7 @@ void sendEmail(int success, int idUserFingerprint) {
         unsigned long timestamp = millis();
         // Crear el cuerpo de la solicitud con JSON
         int id = -1;
-        String jsonPayload = "{\"success\":\"" + success + "\",\"timestamp\":" + timestamp + ",\"idUserFingerprint\":" + idUserFingerprint + "}";
+        String jsonPayload = "{\"success\":\"" + String(success) + "\",\"timestamp\":" + String(timestamp) + ",\"idUserFingerprint\":" + String(idUserFingerprint) + "}";
 
         // Enviar solicitud POST
         int httpResponseCode = http.POST(jsonPayload);
@@ -449,7 +496,7 @@ uint8_t RegistrarHuella() {
     // Enviar datos al servidor backend
     if (WiFi.status() == WL_CONNECTED) {
       HTTPClient http;
-      String serverURL = "http://192.168.68.102:5050/usersFingerprint/confirmRegistration";  // Cambia a la IP de tu backend
+      String serverURL = "http://" + backendIP + ":5050/usersFingerprint/confirmRegistration"; 
       http.begin(serverURL);
       http.addHeader("Content-Type", "application/json");
 
@@ -489,7 +536,7 @@ void BorrarHuella() {
 
     if (WiFi.status() == WL_CONNECTED) {
     HTTPClient http;
-    String serverURL = "http://192.168.68.102:5050/usersFingerprint/confirmDelete";  // Cambia a la IP de tu backend
+    String serverURL = "http://"+ backendIP +":5050/usersFingerprint/confirmDelete";  // Cambia a la IP de tu backend
     http.begin(serverURL);
     http.addHeader("Content-Type", "application/json");
 
