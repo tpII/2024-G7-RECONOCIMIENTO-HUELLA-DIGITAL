@@ -23,8 +23,15 @@ export class AuthController {
         });
 
         const savedUser = await newUser.save();
+
+        emailCache.push(newUser.email); // Actualizar caché
+        updateVapidDetails(); // Actualizar configuración de webPush
+
+
         return savedUser;
     }
+
+    
 
     static async login({ email, password }) {
         Validation.email(email);
@@ -61,6 +68,17 @@ export class AuthController {
             res.status(500).json({ message: 'Error retrieving users' });
         }
     }
+
+    static async getAllUsersEmails(req, res) {
+        try {
+            const users = await User.find({}, 'email');
+            const emails = users.map(user => user.email); // Extrae solo los emails
+            res.status(200).json({ emails }); // Enviar como un objeto con la propiedad 'emails'
+        } catch (err) {
+            res.status(500).json({ message: 'Error retrieving users emails' });
+        }
+    }
+    
 
     static async getUserCount(req, res) {
         try {

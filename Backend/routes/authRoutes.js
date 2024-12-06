@@ -36,6 +36,7 @@ router.post('/check-auth', AuthController.checkAuth);
 router.get('/users/:id', AuthController.getUserById);
 router.put('/users/:id', AuthController.updateUser);
 router.delete('/users/:id', AuthController.deleteUser);
+router.get('/users-emails', AuthController.getAllUsersEmails);
 
 
 export default router;

@@ -8,11 +8,20 @@ const VAPID_KEYS = {
   privateKey: process.env.VAPID_PRIVATE,
 };
 
+
+
 webPush.setVapidDetails(
-  "mailto:jeroratusny@gmail.com",
+  "mailto:jeroratusny@gmail.com, mailto:m@g.com",
   VAPID_KEYS.publicKey,
   VAPID_KEYS.privateKey
 );
+
+
+// updateVapidDetails(); // Actualizar configuración de webPush
+
+
+
+
 
 
 export const subscribe = async (req, res) => {

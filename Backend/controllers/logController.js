@@ -85,52 +85,48 @@ export const getLogById = async (req, res) => {
 // Create a new log
 export const createLog = async (req, res) => {
   try {
+    // Add timestamp to the log
+    req.body.timestamp = moment().format("DD-MM-YYYY HH:mm:ss");
+
     const log = new Log(req.body);
     console.log(req.body.success);
     const result = await log.save();
 
     if (!req.body.success) {
-     const notificationResult = await sendNotification();
-     if (!notificationResult.success) {
-       console.error(notificationResult.message);
-     }
+      const notificationResult = await sendNotification();
+      if (!notificationResult.success) {
+        console.error(notificationResult.message);
+      }
 
-    // Send an email if the log is a failed attempt
-    const timestamp = moment().format("YYYY-MM-DD HH:mm:ss");
-    const info = await transporter.sendMail({
-      from: '"Sistema de Control de Acceso" <support@smitecodes.com>',
-      to: "jeroratusny@gmail.com, rodriguezmesamariano@gmail.com",
-      subject: "🚨 Alerta de Intento de Acceso No Autorizado 🚨",
-      text: `Se ha detectado un intento de acceso no autorizado a su sistema el ${timestamp}. Si no reconoce esta actividad, por favor contacte a soporte técnico.`,
-      html: `
-                      <h1 style="color: #d32f2f;">Alerta de Seguridad</h1>
-                      <p>Estimado usuario,</p>
-                      <p>
-                        Se ha detectado un intento de acceso no autorizado a su sistema el 
-                        <b>${timestamp}</b>.
-                      </p>
-                      <p>Si no reconoce esta actividad, por favor:</p>
-                      <ul>
-                        <li>Verifique sus credenciales y cámbielas si es necesario.</li>
-                        <li>Contacte a nuestro equipo de soporte técnico de inmediato.</li>
-                      </ul>
-                      <p>Atentamente,</p>
-                      <p><b>Sistema de Control de Acceso</b></p>
-                    `,
-    })
-    res.status(200).send(info);
+      // Send an email if the log is a failed attempt
+      const info = await transporter.sendMail({
+        from: '"Sistema de Control de Acceso" <support@smitecodes.com>',
+        to: "jeroratusny@gmail.com, rodriguezmesamariano@gmail.com",
+        subject: "🚨 Alerta de Intento de Acceso No Autorizado 🚨",
+        text: `Se ha detectado un intento de acceso no autorizado a su sistema el ${req.body.timestamp}. Si no reconoce esta actividad, por favor contacte a soporte técnico.`,
+        html: `
+          <h1 style="color: #d32f2f;">Alerta de Seguridad</h1>
+          <p>Estimado usuario,</p>
+          <p>
+            Se ha detectado un intento de acceso no autorizado a su sistema el 
+            <b>${req.body.timestamp}</b>.
+          </p>
+          <p>Si no reconoce esta actividad, por favor:</p>
+          <ul>
+            <li>Verifique sus credenciales y cámbielas si es necesario.</li>
+            <li>Contacte a nuestro equipo de soporte técnico de inmediato.</li>
+          </ul>
+          <p>Atentamente,</p>
+          <p><b>Sistema de Control de Acceso</b></p>
+        `,
+      });
+      res.status(200).send(info);
 
+      
+    } else {
+      // Send authorized access response
+      res.status(201).send("Authorized access");
     }
-
-
-      else {
-     //send not authorized http status
-        res.status(201).send("Authorized access");
-    }
-
-
-
-
   } catch (err) {
     res.status(500).send(err);
   }

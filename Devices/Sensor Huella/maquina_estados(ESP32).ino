@@ -14,9 +14,9 @@ Adafruit_Fingerprint finger = Adafruit_Fingerprint(&mySerial);
 // VARIABLES DEL PROGRAMA
 
 // LED /////////////////////////////////////
-#define RGB_GREEN 15
+#define RGB_GREEN 25
 #define RGB_BLUE 4
-#define RGB_RED 25
+#define RGB_RED 15
 
 #define espera 300
 #define duracion 500  // 5 segundos
@@ -112,7 +112,7 @@ void setup() {
   Serial.begin(115200);
   while (!Serial)
     ;
-  delay(1000);
+  delay(500);
   Serial.println("Inicializando sensor de huellas...");
   mySerial.begin(57600, SERIAL_8N1, 16, 17);
   delay(100);
@@ -134,7 +134,7 @@ void setup() {
   WiFi.begin(ssid, password);
   Serial.println("Estableciendo conexión a WiFi...");
   while (WiFi.status() != WL_CONNECTED) {
-    delay(1000);
+    delay(500);
     Serial.print(".");
   }
   Serial.print("\nConectado a la red con IP: ");
@@ -291,6 +291,7 @@ void loop() {
       estado = 1;
       break;
     case 2:
+      registrarHuellaLCD();
       RegistrarHuella();
       estado = 1;
       break;
@@ -310,7 +311,7 @@ void loop() {
       estado = 1;
       break;
   }
-  delay(1000);
+  delay(500);
 }
 
 uint8_t detectarHuella() {
@@ -387,11 +388,9 @@ void sendEmail(int success, int idUserFingerprint) {
         http.begin(serverURL);
         http.addHeader("Content-Type", "application/json");
 
-        // timestamp
-        unsigned long timestamp = millis();
         // Crear el cuerpo de la solicitud con JSON
         int id = -1;
-        String jsonPayload = "{\"success\":\"" + String(success) + "\",\"timestamp\":" + String(timestamp) + ",\"idUserFingerprint\":" + String(idUserFingerprint) + "}";
+        String jsonPayload = "{\"success\":\"" + String(success) + "\",\"idUserFingerprint\":" + String(idUserFingerprint) + "}";
 
         // Enviar solicitud POST
         int httpResponseCode = http.POST(jsonPayload);
@@ -505,9 +504,6 @@ uint8_t RegistrarHuella() {
 
       // Enviar solicitud POST
       int httpResponseCode = http.POST(jsonPayload);
-      Serial.println("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
-      Serial.println(httpResponseCode);
-      Serial.println("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
 
       // Revisar el código de respuesta
       if (httpResponseCode > 0) {
@@ -545,9 +541,6 @@ void BorrarHuella() {
 
     // Enviar solicitud POST
     int httpResponseCode = http.POST(jsonPayload);
-    Serial.println("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
-    Serial.println(httpResponseCode);
-    Serial.println("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
 
     // Revisar el código de respuesta
     if (httpResponseCode > 0) {
@@ -620,15 +613,30 @@ void continuoLCD() {
   colorG = 0;
   colorB = 255;
   lcd.setRGB(colorR, colorG, colorB);
-  lcd.setCursor(0, 0);
-  lcd.print(" Ingrese huella ");
-  lcd.setCursor(7, 1);
-  lcd.write("HORA");
-  delay(350);
+  lcd.clear();
+  lcd.setCursor(4, 0);
+  lcd.print(" Ingrese ");
+  lcd.setCursor(6, 1);
+  lcd.write("Huella ");
+  delay(5);
+}
+
+void registrarHuellaLCD() {
+  apagarRGB();
+  colorR = 150;
+  colorG = 0;
+  colorB = 150;
+  lcd.setRGB(colorR, colorG, colorB);
+  lcd.clear();
+  lcd.setCursor(6, 0);
+  lcd.print("Apoye");
+  lcd.setCursor(6, 1);
+  lcd.write("Huella");
+  delay(5);
 }
 
 void casoEXITO() {
-  int greenIntensity = 0;
+  int greenIntensity = 255;
   int blueIntensity = 255;
   int redIntensity = 255;
   colorR = 0;
@@ -636,11 +644,12 @@ void casoEXITO() {
   colorB = 0;
 
   // Establecer los colores
-  analogWrite(RGB_GREEN, greenIntensity);
+  analogWrite(RGB_RED, greenIntensity);
   analogWrite(RGB_BLUE, blueIntensity);
-  analogWrite(RGB_RED, redIntensity);
+  analogWrite(RGB_GREEN, redIntensity);
 
   lcd.setRGB(colorR, colorG, colorB);
+  lcd.clear();
   lcd.setCursor(0, 0);
   lcd.print("ACCESO CORRECTO");
   lcd.setCursor(7, 1);
@@ -674,13 +683,12 @@ void casoFALLO() {
   analogWrite(RGB_RED, redIntensity);
 
   lcd.setRGB(colorR, colorG, colorB);
+  lcd.clear();
   lcd.setCursor(0, 0);
   lcd.print("ACCESO DENEGADO");
   lcd.setCursor(7, 1);
-  lcd.print("               ");
-  lcd.setCursor(7, 1);
   lcd.write(byte(1));
-  delay(300);
+  delay(5);
 
   // Reproduce la melodía
   for (int thisNote = 0; thisNote < 4; thisNote++) {
