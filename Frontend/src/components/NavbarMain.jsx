@@ -19,18 +19,12 @@ import { useNavigate } from "react-router-dom";
 
 export default function NavbarMain({ userData }) {
   const [error, setError] = useState("");
-  const [isPushEnabled, setIsPushEnabled] = useState(false); // Nuevo estado para rastrear notificaciones
+  const [isPushEnabled, setIsPushEnabled] = useState(false); // Estado para notificaciones
   const navigate = useNavigate();
 
   // Chequear si las notificaciones ya están habilitadas al cargar el componente
   useEffect(() => {
-    if ("serviceWorker" in navigator && "PushManager" in window) {
-      navigator.serviceWorker.ready.then((registration) => {
-        registration.pushManager.getSubscription().then((subscription) => {
-          setIsPushEnabled(!!subscription); // Si hay una suscripción, las notificaciones están activadas
-        });
-      });
-    }
+    setIsPushEnabled(false); // Siempre iniciar en falso
   }, []);
 
   const handleSubmit = async (e) => {
@@ -62,6 +56,18 @@ export default function NavbarMain({ userData }) {
     setError("");
 
     try {
+      if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+        throw new Error(
+          "Push notifications are not supported in this browser."
+        );
+      }
+
+      const permission = await Notification.requestPermission();
+
+      if (permission !== "granted") {
+        throw new Error("Push notifications permission denied.");
+      }
+
       const registration = await navigator.serviceWorker.register(
         "/service-worker.js"
       );
@@ -84,10 +90,12 @@ export default function NavbarMain({ userData }) {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || "Something went wrong");
+        throw new Error(
+          errorData.message || "Failed to enable push notifications"
+        );
       }
 
-      setIsPushEnabled(true); // Actualizar el estado
+      setIsPushEnabled(true);
       alert("Push notifications enabled");
     } catch (error) {
       setError(error.message);
@@ -119,11 +127,13 @@ export default function NavbarMain({ userData }) {
 
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.message || "Something went wrong");
+          throw new Error(
+            errorData.message || "Failed to disable push notifications"
+          );
         }
       }
 
-      setIsPushEnabled(false); // Actualizar el estado
+      setIsPushEnabled(false);
       alert("Push notifications disabled");
     } catch (error) {
       setError(error.message);

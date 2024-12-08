@@ -9,17 +9,28 @@ import {
 } from "@nextui-org/react";
 import { useState } from "react";
 
-export default function Signup({setUserCount}) {
+export default function Signup({ setUserCount }) {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setSuccess("");
+
+
+    if (!validateEmail(email)) {
+      setError("Please enter a valid email address.");
+      return;
+    }
 
     try {
       const response = await fetch("http://localhost:5050/api/auth/signup", {
@@ -50,7 +61,6 @@ export default function Signup({setUserCount}) {
         </CardHeader>
         <CardBody className="space-y-4">
           {error && <div className="text-red-500">{error}</div>}
-          {console.log(error)}
           {success && <div className="text-green-500">{success}</div>}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
@@ -84,7 +94,7 @@ export default function Signup({setUserCount}) {
               />
             </div>
             <CardFooter className="flex flex-col space-y-2">
-              <Button className="w-full" type="submit">
+              <Button className="w-full" type="submit" onClick={handleSubmit}>
                 Signup
               </Button>
             </CardFooter>

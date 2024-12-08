@@ -1,6 +1,5 @@
 import webPush from "web-push";
 
-
 let subscriptions = [];
 
 const VAPID_KEYS = {
@@ -9,18 +8,11 @@ const VAPID_KEYS = {
 };
 
 
-
 webPush.setVapidDetails(
-  "mailto:jeroratusny@gmail.com, mailto:m@g.com",
+  `mailto:admin@tdp2.com`, // admin email
   VAPID_KEYS.publicKey,
   VAPID_KEYS.privateKey
 );
-
-
-// updateVapidDetails(); // Actualizar configuración de webPush
-
-
-
 
 
 

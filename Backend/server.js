@@ -9,6 +9,26 @@ import cookieParser from 'cookie-parser';
 import dgram from 'dgram';
 import { setEsp32Ip } from './esp32Config.js';
 import os from 'os';
+import { updateEmailStore, getEmailStore } from "./controllers/emailStore.js";
+import { AuthController } from "./controllers/authController.js";
+
+// Inicializar la variable con los correos electrónicos registrados
+const initializeEmailStore = async () => {
+  try {
+    const registeredEmails = await AuthController.getAllUsersEmails();
+    console.log("Emails registrados:", registeredEmails);
+    const webpushEmails = registeredEmails; // Asumiendo que `getAllEmailsUser` devuelve una lista de usuarios con un campo `email`
+    const emailEmails = [...webpushEmails]; // Si los correos electrónicos para webpush y email son los mismos
+
+    //updateEmailStore("webpush", webpushEmails);
+    updateEmailStore("email", emailEmails);
+  } catch (error) {
+    console.error("Error initializing email store:", error);
+  }
+};
+
+// Llamar a la función de inicialización
+initializeEmailStore();
 
 const PORT = process.env.PORT || 5050;
 const BROADCAST_PORT = 12345; // Puerto para el broadcast
