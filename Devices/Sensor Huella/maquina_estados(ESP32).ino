@@ -65,8 +65,11 @@ uint8_t aux = 1;
 // WIFI ////////////////////////////////
 
 // Configuración de la red WiFi
-const char* ssid = "Marian's Room";
-const char* password = "Mariansexo1551";
+//const char* ssid = "Marian's Room";
+//const char* password = "Mariansexo1551";
+const char* ssid = "Milo J 2.4GHz";
+const char* password = "01444650814";
+
 
 // Crear el servidor HTTP en el puerto 80
 WebServer server(80);
@@ -115,7 +118,7 @@ void setup() {
   delay(500);
   Serial.println("Inicializando sensor de huellas...");
   mySerial.begin(57600, SERIAL_8N1, 16, 17);
-  delay(100);
+  delay(250);
   if (finger.verifyPassword()) {
     Serial.println(F("Sensor de huellas conectado correctamente."));
     // Cambiar el estado según la entrada recibida (0, 1, 2, o 3)
@@ -173,6 +176,7 @@ void setup() {
       estado = 2;
 
       server.send(200, "text/plain", "Datos recibidos y procesados en ESP32");
+
     } else {
       server.send(400, "application/json", "{\"message\":\"No JSON data found\"}");
     }
@@ -332,14 +336,14 @@ uint8_t detectarHuella() {
         return p;
       case FINGERPRINT_FEATUREFAIL:
       case FINGERPRINT_INVALIDIMAGE:
-        Serial.println("No hay dedo presente o imagen inválida");
+        //Serial.println("No hay dedo presente o imagen inválida");
         return p;
       default:
         Serial.println("Error desconocido");
         return p;
     }
   } else if (p == FINGERPRINT_NOFINGER) {
-    Serial.println("No hay dedo presente.");
+    //Serial.println("No hay dedo presente.");
     return p;
   } else {
     Serial.println("Error al leer el sensor.");
@@ -375,7 +379,7 @@ void LecturaConstante() {
     buscarHuella();
   } else {
     // Si no se detectó una huella válida, maneja otros posibles errores
-    Serial.println("No se pudo detectar una huella válida.");
+    // Serial.println("No se pudo detectar una huella válida.");
   }
 }
 
@@ -420,8 +424,6 @@ void huellaEncontrada() {
   Serial.println("Huella encontrada en la base de datos.");
   Serial.print("ID: ");
   Serial.println(finger.fingerID);
-  Serial.print("Confiabilidad de ");
-  Serial.println(finger.confidence);
 
   // Enviar datos al servidor backend 
   sendEmail(1, finger.fingerID);
@@ -611,14 +613,14 @@ void continuoLCD() {
   apagarRGB();
   colorR = 0;
   colorG = 0;
-  colorB = 255;
+  colorB = 50;
   lcd.setRGB(colorR, colorG, colorB);
   lcd.clear();
   lcd.setCursor(4, 0);
   lcd.print(" Ingrese ");
   lcd.setCursor(6, 1);
   lcd.write("Huella ");
-  delay(5);
+  delay(250);
 }
 
 void registrarHuellaLCD() {
@@ -632,7 +634,7 @@ void registrarHuellaLCD() {
   lcd.print("Apoye");
   lcd.setCursor(6, 1);
   lcd.write("Huella");
-  delay(5);
+  delay(250);
 }
 
 void casoEXITO() {
@@ -688,7 +690,7 @@ void casoFALLO() {
   lcd.print("ACCESO DENEGADO");
   lcd.setCursor(7, 1);
   lcd.write(byte(1));
-  delay(5);
+  delay(250);
 
   // Reproduce la melodía
   for (int thisNote = 0; thisNote < 4; thisNote++) {

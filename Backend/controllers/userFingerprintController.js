@@ -38,6 +38,20 @@ export const getUsernameByFingerprintId = async (req, res) => {
     }
 }
 
+export async function getUsernameByFingerprintIdFunction(idFingerprint) {
+    try {
+        const userFingerprint = await UserFingerprint.findOne({ idFingerprint });
+        if (userFingerprint) {
+            return userFingerprint.username; // Devuelve el nombre de usuario si se encuentra
+        } else {
+            return "NN"; // Devuelve "NN" si no se encuentra el usuario
+        }
+    } catch (err) {
+        console.error("Error al obtener el nombre de usuario:", err);
+        throw err; // Propaga el error para que el manejador lo capture
+    }
+}
+
 
 // Get a specific user fingerprint (By ID)
 export const getUserFingerprintById = async (req, res) => {
@@ -96,7 +110,11 @@ export const confirmFingerprintRegistration = async (req, res) => {
 // Delete a user fingerprint by ID
 export const startDeleteFingerprint = async (req, res) => {
     try {
+        const esp32Ip = await getEsp32Ip();
         const { idFingerprint } = req.body;
+        console.log(JSON.stringify({ idFingerprint }));
+        console.log(req.body);
+        console.log(esp32Ip);
 
         const response = await fetch(`http://${esp32Ip}/deleteFingerprint`, {
             method: 'DELETE',
@@ -105,8 +123,10 @@ export const startDeleteFingerprint = async (req, res) => {
         });
 
         if (response.ok) {
+            console.log("Success");
             res.status(200).json({ message: "Fingerprint ID sent to ESP32 for deletion", idFingerprint });
         } else {
+            console.log("Error");
             res.status(500).json({ message: "Failed to send data to ESP32" });
         }
     } catch (err) {

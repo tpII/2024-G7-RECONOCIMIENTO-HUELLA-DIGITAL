@@ -32,6 +32,7 @@ export const subscribe = async (req, res) => {
     }
 
     subscriptions.push(subscription);
+    console.log(subscriptions);
     res.status(201).send("Subscribed successfully");
   } catch (err) {
     res.status(500).send({ error: err.message });

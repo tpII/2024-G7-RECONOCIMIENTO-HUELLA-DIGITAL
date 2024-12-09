@@ -4,6 +4,7 @@ import nodemailer from 'nodemailer';
 import moment from "moment";
 import { subscribe, sendNotification } from './webPushController.js';
 import { updateEmailStore, getEmailStore } from "./emailStore.js";
+import { getUsernameByFingerprintIdFunction } from './userFingerprintController.js';
 
 
 
@@ -47,10 +48,17 @@ export const getLogById = async (req, res) => {
 export const createLog = async (req, res) => {
   try {
     const log = new Log(req.body);
+    console.log(log);
+    //if (log.success) {
+    //  console.log("Entro");
+      log.username = await getUsernameByFingerprintIdFunction(req.body.idUserFingerprint);
+    //}
     console.log(req.body.success);
     const result = await log.save();
 
-    if (!req.body.success) {
+    console.log("Salio");
+
+    if (!Number(req.body.success)) {
       const notificationResult = await sendNotification();
       if (!notificationResult.success) {
         console.error(notificationResult.message);
