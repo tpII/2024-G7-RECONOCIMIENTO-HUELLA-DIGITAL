@@ -138,6 +138,12 @@ export class AuthController {
       if (!deletedUser) {
         return res.status(404).json({ message: "User not found" });
       }
+      // remove user from email store
+      const webpushEmails = getEmailStore().webpush;
+      const updatedEmails = webpushEmails.filter(
+        (email) => email !== deletedUser.email
+      );
+      updateEmailStore("email", updatedEmails);
       res.status(200).json({ message: "User deleted successfully" });
     } catch (err) {
       res
@@ -175,6 +181,11 @@ class Validation {
     static email(email) {
         if (typeof email !== "string") {
             throw new Error("Invalid input");
+        }
+        // check email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            throw new Error("Please enter a valid email address");
         }
     }
 
