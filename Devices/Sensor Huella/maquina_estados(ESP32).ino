@@ -64,8 +64,10 @@ uint8_t aux = 1;
 // WIFI ////////////////////////////////
 
 // Configuración de la red WiFi
-const char* ssid = "Marian's Room";
-const char* password = "Mariansexo1551";
+//const char* ssid = "Marian's Room";
+//const char* password = "Mariansexo1551";
+const char* ssid = "Milo J 2.4GHz";
+const char* password = "01444650814";
 
 
 // Crear el servidor HTTP en el puerto 80
