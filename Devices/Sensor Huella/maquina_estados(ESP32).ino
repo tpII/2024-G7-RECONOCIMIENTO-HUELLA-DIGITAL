@@ -57,7 +57,6 @@ byte neg[8] = {
 uint8_t p = 0;
 uint8_t fingerPresentCount = 0;  // Contador para verificar si realmente hay un dedo
 uint8_t estado = 1;              // Estado inicial (1: Lectura constante)
-//uint8_t id;
 uint8_t nuevoEstado = 0;
 uint8_t aux = 1;
 ///////////////////////////////////////////
@@ -65,10 +64,8 @@ uint8_t aux = 1;
 // WIFI ////////////////////////////////
 
 // Configuración de la red WiFi
-//const char* ssid = "Marian's Room";
-//const char* password = "Mariansexo1551";
-const char* ssid = "Milo J 2.4GHz";
-const char* password = "01444650814";
+const char* ssid = "Marian's Room";
+const char* password = "Mariansexo1551";
 
 
 // Crear el servidor HTTP en el puerto 80
@@ -270,22 +267,9 @@ uint8_t readnumber(void) {
 
 void loop() {
   server.handleClient();  // Manejar peticiones de los clientes
+
   // Escuchar respuestas del servidor backend
   listenForResponse();
-  // NOTA -> Comentado ya que si el swapeo de estados se hace mediante peticiones, no hace falta
-  // chequear Serial.
-
-  // if (Serial.available() > 0) {
-  //   aux = Serial.parseInt();
-  // }
-  // if (aux != estado) {
-  //   nuevoEstado = aux;
-  //   if (nuevoEstado >= 1 && nuevoEstado <= 5) {
-  //     estado = nuevoEstado;
-  //     Serial.print("Cambiando al estado: ");
-  //     Serial.println(estado);
-  //   }
-  // }
 
   // Máquina de estados
   switch (estado) {
@@ -378,8 +362,7 @@ void LecturaConstante() {
     Serial.println("Huella detectada y convertida a plantilla, intentando búsqueda en BD...");
     buscarHuella();
   } else {
-    // Si no se detectó una huella válida, maneja otros posibles errores
-    // Serial.println("No se pudo detectar una huella válida.");
+    Serial.println("No se pudo detectar una huella válida.");
   }
 }
 
@@ -427,7 +410,6 @@ void huellaEncontrada() {
 
   // Enviar datos al servidor backend 
   sendEmail(1, finger.fingerID);
-
 }
 
 

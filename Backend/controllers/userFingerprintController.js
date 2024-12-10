@@ -112,9 +112,6 @@ export const startDeleteFingerprint = async (req, res) => {
     try {
         const esp32Ip = await getEsp32Ip();
         const { idFingerprint } = req.body;
-        console.log(JSON.stringify({ idFingerprint }));
-        console.log(req.body);
-        console.log(esp32Ip);
 
         const response = await fetch(`http://${esp32Ip}/deleteFingerprint`, {
             method: 'DELETE',

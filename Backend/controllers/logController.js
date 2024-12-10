@@ -48,15 +48,8 @@ export const getLogById = async (req, res) => {
 export const createLog = async (req, res) => {
   try {
     const log = new Log(req.body);
-    console.log(log);
-    //if (log.success) {
-    //  console.log("Entro");
-      log.username = await getUsernameByFingerprintIdFunction(req.body.idUserFingerprint);
-    //}
-    console.log(req.body.success);
+    log.username = await getUsernameByFingerprintIdFunction(req.body.idUserFingerprint);
     const result = await log.save();
-
-    console.log("Salio");
 
     if (!Number(req.body.success)) {
       const notificationResult = await sendNotification();
